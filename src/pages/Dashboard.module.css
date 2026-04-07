@@ -1,0 +1,341 @@
+.wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header: title + filter */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.filterSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filterLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-label);
+  letter-spacing: 0.02em;
+}
+
+.filterPills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-input);
+  background: var(--content-cream);
+  color: var(--text-dark);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.pill:hover {
+  border-color: var(--header-purple);
+  color: var(--header-purple);
+}
+
+.pillActive {
+  background: var(--header-purple);
+  border-color: var(--header-purple);
+  color: var(--btn-primary-text);
+}
+
+/* KPI cards row */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .kpiRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .kpiRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpiCard {
+  background: var(--content-cream);
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.kpiCard.kpiCritical {
+  background: var(--alert-critical);
+  border-color: var(--alert-critical);
+  color: var(--alert-critical-text);
+}
+
+.kpiIcon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: rgba(139, 107, 170, 0.2);
+  border-radius: 10px;
+}
+
+.kpiCritical .kpiIcon {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.kpiLabel {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-label);
+  margin-bottom: 0.35rem;
+}
+
+.kpiCard.kpiCritical .kpiLabel {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.kpiValue {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.kpiCritical .kpiValue {
+  color: #fff;
+}
+
+/* Charts grid 2x2 */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chartWidget {
+  background: var(--content-cream);
+  border: 1px solid var(--border-input);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.chartTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+/* Area chart */
+.areaChart {
+  position: relative;
+  min-height: 180px;
+}
+
+.areaChartInner {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 140px;
+}
+
+.areaBarWrap {
+  flex: 1;
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.areaBar {
+  width: 6px;
+  min-height: 4px;
+  border-radius: 4px 4px 0 0;
+  transition: height 0.2s;
+}
+
+.areaLegend {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-label);
+}
+
+.areaLegend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+.areaMonths {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  color: var(--text-label);
+}
+
+/* Donut */
+.donutWrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  position: relative;
+}
+
+.donut {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--header-purple) 0deg 230deg,
+    var(--card-purple) 230deg 320deg,
+    var(--alert-critical) 320deg 360deg
+  );
+  flex-shrink: 0;
+  position: relative;
+}
+
+.donutCenter {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  background: var(--content-cream);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donutCenterLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-label);
+}
+
+.donutCenterValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.donutLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+}
+
+.donutLegend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Bar chart */
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.barRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.barLabel {
+  width: 70px;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+  flex-shrink: 0;
+}
+
+.barTrack {
+  flex: 1;
+  height: 22px;
+  background: rgba(139, 107, 170, 0.12);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--header-purple);
+  border-radius: 6px;
+  min-width: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.actionBtn {
+  background: var(--header-purple);
+  color: var(--btn-primary-text);
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: filter 0.2s;
+}
+
+.actionBtn:hover {
+  filter: brightness(1.1);
+  text-decoration: none;
+}
