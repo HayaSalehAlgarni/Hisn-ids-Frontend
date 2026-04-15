@@ -1,14 +1,50 @@
 import { useState } from 'react'
 import styles from './Reports.module.css'
+import { useLang } from '../context/lang'
 
 const reportTypes = [
-  { id: 'daily', label: 'تقرير يومي', desc: 'ملخص التهديدات والتنبيهات اليومية', icon: '📅' },
-  { id: 'weekly', label: 'تقرير أسبوعي', desc: 'تحليل أسبوعي لأمن الشبكة', icon: '📆' },
-  { id: 'incident', label: 'تقرير حوادث', desc: 'تفاصيل الحوادث الحرجة', icon: '🚨' },
-  { id: 'compliance', label: 'تقرير الامتثال', desc: 'توافق السياسات والمعايير', icon: '✅' },
-  { id: 'suspicious-ip', label: 'تقرير الـ IP المشبوهة', desc: 'قائمة عناوين IP المشبوهة والمحظورة', icon: '🕵️' },
-  { id: 'attack-types', label: 'تقرير أنواع الهجمات', desc: 'DNS / Port Scan / Brute Force', icon: '⚔️' },
-  { id: 'threat-rate', label: 'تقرير معدل التهديدات بالساعة', desc: 'معدل التهديدات لكل ساعة', icon: '📈' },
+  {
+    id: 'daily',
+    icon: '📅',
+    label: { ar: 'تقرير يومي', en: 'Daily report' },
+    desc: { ar: 'ملخص التهديدات والتنبيهات اليومية', en: 'Daily threats & alerts summary' },
+  },
+  {
+    id: 'weekly',
+    icon: '📆',
+    label: { ar: 'تقرير أسبوعي', en: 'Weekly report' },
+    desc: { ar: 'تحليل أسبوعي لأمن الشبكة', en: 'Weekly security analysis' },
+  },
+  {
+    id: 'incident',
+    icon: '🚨',
+    label: { ar: 'تقرير حوادث', en: 'Incident report' },
+    desc: { ar: 'تفاصيل الحوادث الحرجة', en: 'Critical incident details' },
+  },
+  {
+    id: 'compliance',
+    icon: '✅',
+    label: { ar: 'تقرير الامتثال', en: 'Compliance report' },
+    desc: { ar: 'توافق السياسات والمعايير', en: 'Policy & standards compliance' },
+  },
+  {
+    id: 'suspicious-ip',
+    icon: '🕵️',
+    label: { ar: 'تقرير الـ IP المشبوهة', en: 'Suspicious IP report' },
+    desc: { ar: 'قائمة عناوين IP المشبوهة والمحظورة', en: 'List of suspicious/blocked IPs' },
+  },
+  {
+    id: 'attack-types',
+    icon: '⚔️',
+    label: { ar: 'تقرير أنواع الهجمات', en: 'Attack types report' },
+    desc: { ar: 'DNS / Port Scan / Brute Force', en: 'DNS / Port scan / Brute force' },
+  },
+  {
+    id: 'threat-rate',
+    icon: '📈',
+    label: { ar: 'تقرير معدل التهديدات بالساعة', en: 'Hourly threat rate' },
+    desc: { ar: 'معدل التهديدات لكل ساعة', en: 'Threat rate per hour' },
+  },
 ]
 
 const exportFormats = [
@@ -26,6 +62,7 @@ const quickStats = {
 }
 
 export default function Reports() {
+  const { lang } = useLang()
   const [selected, setSelected] = useState('daily')
   const [exportFormat, setExportFormat] = useState('pdf')
   const [generating, setGenerating] = useState(false)
@@ -37,11 +74,12 @@ export default function Reports() {
 
   return (
     <div className={styles.wrapper}>
-      <h2 className={styles.title}>التقارير</h2>
+      <h2 className={styles.title}>{lang === 'ar' ? 'التقارير' : 'Reports'}</h2>
 
       <div className={styles.quickStats}>
         <div className={styles.statMain}>
-          إجمالي التهديدات اليوم: <strong>{quickStats.total}</strong>
+          {lang === 'ar' ? 'إجمالي التهديدات اليوم:' : "Today's total threats:"}{' '}
+          <strong>{quickStats.total}</strong>
         </div>
         <div className={styles.statBreakdown}>
           <span className={styles.statCritical}>CRITICAL: {quickStats.critical}</span>
@@ -56,7 +94,7 @@ export default function Reports() {
 
       <div className={styles.card}>
         <section className={styles.section}>
-          <h3 className={styles.sectionTitle}>نوع التقرير</h3>
+          <h3 className={styles.sectionTitle}>{lang === 'ar' ? 'نوع التقرير' : 'Report type'}</h3>
           <div className={styles.typesGrid}>
             {reportTypes.map((r) => (
               <button
@@ -66,8 +104,8 @@ export default function Reports() {
                 onClick={() => setSelected(r.id)}
               >
                 <span className={styles.typeIcon}>{r.icon}</span>
-                <span className={styles.typeLabel}>{r.label}</span>
-                <span className={styles.typeDesc}>{r.desc}</span>
+                <span className={styles.typeLabel}>{r.label[lang] ?? r.label.en}</span>
+                <span className={styles.typeDesc}>{r.desc[lang] ?? r.desc.en}</span>
               </button>
             ))}
           </div>
@@ -80,7 +118,9 @@ export default function Reports() {
             onClick={handleGenerate}
             disabled={generating}
           >
-            {generating ? 'جاري التوليد...' : 'توليد التقرير'}
+            {generating
+              ? (lang === 'ar' ? 'جاري التوليد...' : 'Generating...')
+              : (lang === 'ar' ? 'توليد التقرير' : 'Generate report')}
           </button>
           <div className={styles.exportIcons}>
             {exportFormats.map((e) => (

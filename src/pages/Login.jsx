@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import AuthLayout from '../components/AuthLayout'
 import styles from '../components/AuthForm.module.css'
 
@@ -51,10 +51,6 @@ export default function Login() {
         <button type="submit" className={styles.submit}>
           تسجيل الدخول
         </button>
-        <p className={styles.footer}>
-          ليس لديك حساب؟{' '}
-          <Link to="/create-account">إنشاء حساب</Link>
-        </p>
       </form>
     </AuthLayout>
   )

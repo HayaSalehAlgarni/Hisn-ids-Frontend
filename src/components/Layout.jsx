@@ -1,62 +1,65 @@
-import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import styles from './Layout.module.css'
+import { useLang } from '../context/lang'
 
-const navItems = [
-  { path: '/', label: 'نظرة عامة', labelEn: 'Dashboard' },
-  { path: '/monitoring', label: 'المراقبة المباشرة', labelEn: 'Live Monitoring' },
-  { path: '/alerts', label: 'التنبيهات', labelEn: 'Alerts' },
-  { path: '/reports', label: 'التقارير', labelEn: 'Reports' },
-  { path: '/analytics', label: 'التحليلات', labelEn: 'Analytics' },
-  { path: '/settings', label: 'الإعدادات', labelEn: 'Settings' },
+const NAV_ITEMS = [
+  { to: '/', icon: '🛡️', label: { ar: 'لوحة التحكم', en: 'Dashboard' } },
+  { to: '/monitoring', icon: '📡', label: { ar: 'المراقبة المباشرة', en: 'Live Monitoring' } },
+  { to: '/alerts', icon: '⚠️', label: { ar: 'التنبيهات', en: 'Alerts' } },
+  { to: '/reports', icon: '🧾', label: { ar: 'التقارير', en: 'Reports' } },
+  { to: '/analytics', icon: '📊', label: { ar: 'التحليلات', en: 'Analytics' } },
+  { to: '/settings', icon: '⚙️', label: { ar: 'الإعدادات', en: 'Settings' } },
 ]
 
 export default function Layout() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { lang } = useLang()
 
   const handleLogout = () => {
     localStorage.removeItem('hisn_user')
-    navigate('/login')
+    navigate('/login', { replace: true })
   }
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} dir="ltr">
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <img src="/hisn-logo.png" alt="حصن HISN" className={styles.brandLogo} />
+          <img src="/hisn-logo.png" alt="HISN IDS" className={styles.brandLogo} />
         </div>
         <nav className={styles.nav}>
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={
-                location.pathname === item.path
-                  ? `${styles.navLink} ${styles.navLinkActive}`
-                  : styles.navLink
+          {NAV_ITEMS.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) =>
+                isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink
               }
             >
-              {item.label}
-            </Link>
+              {item.icon} {item.label[lang] ?? item.label.en}
+            </NavLink>
           ))}
         </nav>
       </aside>
-      <main className={styles.main}>
+
+      <div className={styles.main} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         <header className={styles.header}>
-          <span className={styles.headerTitle}>AI & ML Analytics · IDS</span>
+          <div className={styles.headerTitle}>
+            {location.pathname === '/'
+              ? (lang === 'ar' ? 'لوحة التحكم' : 'Dashboard')
+              : location.pathname}
+          </div>
           <div className={styles.headerActions}>
-            <Link to="/settings" className={styles.iconBtn} title="الإعدادات">
-              ⚙
-            </Link>
-            <button type="button" onClick={handleLogout} className={styles.logoutBtn}>
-              تسجيل الخروج
+            <button type="button" className={styles.logoutBtn} onClick={handleLogout}>
+              {lang === 'ar' ? 'تسجيل خروج' : 'Logout'}
             </button>
           </div>
         </header>
-        <div className={styles.content}>
+        <main className={styles.content}>
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }

@@ -1,18 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import styles from './LiveMonitoring.module.css'
+import { useLang } from '../context/lang'
 
 const TYPE_OPTIONS = [
-  { id: 'all', label: 'الكل' },
-  { id: 'DNS', label: 'DNS' },
-  { id: 'Suspicious', label: 'مشبوه' },
-  { id: 'Normal', label: 'عادي' },
+  { id: 'all', label: { ar: 'الكل', en: 'All' } },
+  { id: 'DNS', label: { ar: 'DNS', en: 'DNS' } },
+  { id: 'Suspicious', label: { ar: 'مشبوه', en: 'Suspicious' } },
+  { id: 'Normal', label: { ar: 'عادي', en: 'Normal' } },
 ]
 
 const SEVERITY_OPTIONS = [
-  { id: 'all', label: 'الكل' },
-  { id: 'high', label: 'HIGH' },
-  { id: 'medium', label: 'MEDIUM' },
-  { id: 'low', label: 'LOW' },
+  { id: 'all', label: { ar: 'الكل', en: 'All' } },
+  { id: 'high', label: { ar: 'HIGH', en: 'HIGH' } },
+  { id: 'medium', label: { ar: 'MEDIUM', en: 'MEDIUM' } },
+  { id: 'low', label: { ar: 'LOW', en: 'LOW' } },
 ]
 
 const TYPE_ICONS = {
@@ -51,6 +52,7 @@ const generateMockEvents = (count = 150) => {
 const initialEvents = generateMockEvents(150)
 
 export default function LiveMonitoring() {
+  const { lang } = useLang()
   const [events, setEvents] = useState(initialEvents)
   const [live, setLive] = useState(true)
   const [lastUpdate, setLastUpdate] = useState(() => Date.now())
@@ -113,17 +115,51 @@ export default function LiveMonitoring() {
 
   const totalPages = Math.ceil(filtered.length / pageSize) || 1
 
+  const t = lang === 'ar' ? {
+    title: 'المراقبة المباشرة',
+    stopped: 'متوقف',
+    live: 'مباشر',
+    toggleOff: 'إيقاف',
+    toggleOn: 'تشغيل',
+    lastUpdate: (s) => `آخر تحديث منذ ${s} ثانية`,
+    severity: 'الأولوية',
+    type: 'النوع',
+    searchIp: 'بحث بالـ IP',
+    searchPlaceholder: 'مثال: 192.168.1',
+    showing: (shown, total) => `عرض ${shown} من ${total}`,
+    pageSize: 'عرض:',
+    prev: 'السابق',
+    next: 'التالي',
+    table: { time: 'الوقت', src: 'المصدر', dst: 'الوجهة', type: 'النوع', severity: 'الأولوية' },
+  } : {
+    title: 'Live Monitoring',
+    stopped: 'Stopped',
+    live: 'Live',
+    toggleOff: 'Stop',
+    toggleOn: 'Start',
+    lastUpdate: (s) => `Last update: ${s}s ago`,
+    severity: 'Severity',
+    type: 'Type',
+    searchIp: 'Search by IP',
+    searchPlaceholder: 'e.g. 192.168.1',
+    showing: (shown, total) => `Showing ${shown} of ${total}`,
+    pageSize: 'Show:',
+    prev: 'Previous',
+    next: 'Next',
+    table: { time: 'Time', src: 'Source', dst: 'Destination', type: 'Type', severity: 'Severity' },
+  }
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.header}>
-        <h2 className={styles.title}>المراقبة المباشرة</h2>
+        <h2 className={styles.title}>{t.title}</h2>
         <div className={styles.controls}>
           <span className={styles.lastUpdate}>
-            {live ? `آخر تحديث منذ ${secondsSinceUpdate} ثانية` : 'متوقف'}
+            {live ? t.lastUpdate(secondsSinceUpdate) : t.stopped}
           </span>
           <span className={styles.status}>
             <span className={live ? styles.indicatorOn : styles.indicatorOff} />
-            {live ? 'مباشر' : 'متوقف'}
+            {live ? t.live : t.stopped}
           </span>
           <button
             type="button"
@@ -133,7 +169,7 @@ export default function LiveMonitoring() {
               if (!live) setLastUpdate(Date.now())
             }}
           >
-            {live ? 'إيقاف' : 'تشغيل'}
+            {live ? t.toggleOff : t.toggleOn}
           </button>
         </div>
       </div>
@@ -148,7 +184,7 @@ export default function LiveMonitoring() {
 
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>الأولوية</label>
+          <label className={styles.filterLabel}>{t.severity}</label>
           <div className={styles.filterPills}>
             {SEVERITY_OPTIONS.map((o) => (
               <button
@@ -157,13 +193,13 @@ export default function LiveMonitoring() {
                 className={filterSeverity === o.id ? `${styles.pill} ${styles.pillActive}` : styles.pill}
                 onClick={() => setFilterSeverity(o.id)}
               >
-                {o.label}
+                {o.label[lang] ?? o.label.en}
               </button>
             ))}
           </div>
         </div>
         <div className={styles.filterGroup}>
-          <label className={styles.filterLabel}>النوع</label>
+          <label className={styles.filterLabel}>{t.type}</label>
           <div className={styles.filterPills}>
             {TYPE_OPTIONS.map((o) => (
               <button
@@ -172,17 +208,17 @@ export default function LiveMonitoring() {
                 className={filterType === o.id ? `${styles.pill} ${styles.pillActive}` : styles.pill}
                 onClick={() => setFilterType(o.id)}
               >
-                {o.label}
+                {o.label[lang] ?? o.label.en}
               </button>
             ))}
           </div>
         </div>
         <div className={styles.searchGroup}>
-          <label className={styles.filterLabel}>بحث بالـ IP</label>
+          <label className={styles.filterLabel}>{t.searchIp}</label>
           <input
             type="text"
             className={styles.searchInput}
-            placeholder="مثال: 192.168.1"
+            placeholder={t.searchPlaceholder}
             value={searchIp}
             onChange={(e) => {
               setSearchIp(e.target.value)
@@ -195,10 +231,10 @@ export default function LiveMonitoring() {
       <div className={styles.card}>
         <div className={styles.tableHeader}>
           <span className={styles.recordCount}>
-            عرض {paginated.length} من {filtered.length}
+            {t.showing(paginated.length, filtered.length)}
           </span>
           <div className={styles.pageSizeWrap}>
-            <label className={styles.pageSizeLabel}>عرض:</label>
+            <label className={styles.pageSizeLabel}>{t.pageSize}</label>
             <select
               className={styles.pageSizeSelect}
               value={pageSize}
@@ -218,11 +254,11 @@ export default function LiveMonitoring() {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>الوقت</th>
-                <th>المصدر</th>
-                <th>الوجهة</th>
-                <th>النوع</th>
-                <th>الأولوية</th>
+                <th>{t.table.time}</th>
+                <th>{t.table.src}</th>
+                <th>{t.table.dst}</th>
+                <th>{t.table.type}</th>
+                <th>{t.table.severity}</th>
               </tr>
             </thead>
             <tbody>
@@ -255,7 +291,7 @@ export default function LiveMonitoring() {
               disabled={page === 0}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
-              السابق
+              {t.prev}
             </button>
             <span className={styles.pageInfo}>
               {page + 1} / {totalPages}
@@ -266,7 +302,7 @@ export default function LiveMonitoring() {
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             >
-              التالي
+              {t.next}
             </button>
           </div>
         )}

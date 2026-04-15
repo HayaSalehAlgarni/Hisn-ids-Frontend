@@ -24,8 +24,8 @@
   height: auto;
   object-fit: contain;
   mix-blend-mode: lighten;
-  transform: scale(1.35) translateX(1.1rem);
-  transform-origin: right center;
+  transform: scale(1.25);
+  transform-origin: left center;
 }
 
 .nav {
