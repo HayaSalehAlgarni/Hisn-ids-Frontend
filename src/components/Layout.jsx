@@ -3,12 +3,12 @@ import styles from './Layout.module.css'
 import { useLang } from '../context/lang'
 
 const NAV_ITEMS = [
-  { to: '/', icon: '🛡️', label: { ar: 'لوحة التحكم', en: 'Dashboard' } },
-  { to: '/monitoring', icon: '📡', label: { ar: 'المراقبة المباشرة', en: 'Live Monitoring' } },
-  { to: '/alerts', icon: '⚠️', label: { ar: 'التنبيهات', en: 'Alerts' } },
-  { to: '/reports', icon: '🧾', label: { ar: 'التقارير', en: 'Reports' } },
-  { to: '/analytics', icon: '📊', label: { ar: 'التحليلات', en: 'Analytics' } },
-  { to: '/settings', icon: '⚙️', label: { ar: 'الإعدادات', en: 'Settings' } },
+  { to: '/app', icon: '🛡️', label: { ar: 'لوحة التحكم', en: 'Dashboard' } },
+  { to: '/app/monitoring', icon: '📡', label: { ar: 'المراقبة المباشرة', en: 'Live Monitoring' } },
+  { to: '/app/alerts', icon: '⚠️', label: { ar: 'التنبيهات', en: 'Alerts' } },
+  { to: '/app/reports', icon: '🧾', label: { ar: 'التقارير', en: 'Reports' } },
+  { to: '/app/analytics', icon: '📊', label: { ar: 'التحليلات', en: 'Analytics' } },
+  { to: '/app/settings', icon: '⚙️', label: { ar: 'الإعدادات', en: 'Settings' } },
 ]
 
 export default function Layout() {
@@ -18,7 +18,8 @@ export default function Layout() {
 
   const handleLogout = () => {
     localStorage.removeItem('hisn_user')
-    navigate('/login', { replace: true })
+    localStorage.removeItem('hisn_token')
+    navigate('/', { replace: true })
   }
 
   return (
@@ -32,7 +33,7 @@ export default function Layout() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end={item.to === '/app'}
               className={({ isActive }) =>
                 isActive ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink
               }
@@ -46,9 +47,9 @@ export default function Layout() {
       <div className={styles.main} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         <header className={styles.header}>
           <div className={styles.headerTitle}>
-            {location.pathname === '/'
+            {location.pathname === '/app' || location.pathname === '/app/dashboard'
               ? (lang === 'ar' ? 'لوحة التحكم' : 'Dashboard')
-              : location.pathname}
+              : location.pathname.replace(/^\/app/, '') || '/'}
           </div>
           <div className={styles.headerActions}>
             <button type="button" className={styles.logoutBtn} onClick={handleLogout}>

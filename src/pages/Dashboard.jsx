@@ -1,16 +1,61 @@
-import { useState } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import styles from './Dashboard.module.css'
 import { useLang } from '../context/lang'
+import { fetchDashboardStats } from '../api/dashboard'
 
-const areaChartMonthsAr = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']
-const areaChartMonthsEn = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-const areaChartThreats = [8, 12, 10, 15, 14, 18, 16, 20, 17, 22, 19, 12]
-const areaChartAlerts = [3, 5, 4, 6, 7, 9, 8, 10, 9, 11, 10, 3]
+const DONUT_COLORS = ['var(--header-purple)', 'var(--card-purple)', 'var(--alert-critical)']
+
+function monthShortLabel(ym, lang) {
+  const parts = String(ym || '').split('-')
+  if (parts.length !== 2) return ym
+  const y = Number(parts[0])
+  const m = Number(parts[1]) - 1
+  if (Number.isNaN(y) || Number.isNaN(m)) return ym
+  const d = new Date(y, m, 1)
+  return d.toLocaleDateString(lang === 'ar' ? 'ar-SA' : 'en-US', { month: 'short' })
+}
+
+function bucketLabel(key, lang) {
+  const ar = {
+    '0-24': 'ثقة 0–24',
+    '25-49': 'ثقة 25–49',
+    '50-74': 'ثقة 50–74',
+    '75-100': 'ثقة 75–100',
+    unknown: 'غير محدد',
+  }
+  const en = {
+    '0-24': 'Conf. 0–24',
+    '25-49': 'Conf. 25–49',
+    '50-74': 'Conf. 50–74',
+    '75-100': 'Conf. 75–100',
+    unknown: 'Unknown',
+  }
+  return (lang === 'ar' ? ar : en)[key] ?? key
+}
 
 export default function Dashboard() {
   const { lang } = useLang()
   const [activeStage, setActiveStage] = useState('all')
+  const [stats, setStats] = useState(null)
+  const [loadError, setLoadError] = useState('')
+
+  const load = useCallback(async () => {
+    try {
+      const data = await fetchDashboardStats(activeStage)
+      setStats(data)
+      setLoadError('')
+    } catch (e) {
+      setStats(null)
+      setLoadError(e?.message || 'Failed to load dashboard')
+    }
+  }, [activeStage])
+
+  useEffect(() => {
+    load()
+    const timer = setInterval(load, 10000)
+    return () => clearInterval(timer)
+  }, [load])
 
   const t = lang === 'ar' ? {
     title: 'لوحة الأمن',
@@ -22,36 +67,19 @@ export default function Dashboard() {
       { id: 'medium', label: 'متوسط' },
       { id: 'low', label: 'منخفض' },
     ],
-    kpis: [
-      { icon: '🛡️', label: 'التهديدات اليوم', value: '12' },
-      { icon: '📊', label: 'دقة الكشف', value: '97%' },
-      { icon: '⚠️', label: 'تنبيهات حرجة', value: '3', critical: true },
-      { icon: '⏱️', label: 'متوسط زمن الاستجابة', value: '1.2s' },
-    ],
-    chartThreatsAndAlerts: 'التهديدات والتنبيهات',
-    legendThreats: 'تهديدات',
-    legendAlerts: 'تنبيهات',
-    chartByType: 'التهديدات حسب النوع',
+    kpiTotal: 'إجمالي التنبيهات',
+    kpiConfidence: 'متوسط الثقة',
+    kpiCritical: 'تنبيهات حرجة',
+    kpiSources: 'مصادر IP فريدة',
+    noConfidence: '—',
+    chartTrend: 'التنبيهات (آخر 12 شهرًا)',
+    legendElevated: 'حرج / عالي',
+    legendRest: 'متوسط / منخفض / غير مصنف',
+    chartByType: 'أنواع الهجمات (من قاعدة البيانات)',
     donutCenter: 'الأنواع',
-    donutData: [
-      { label: 'مسح منافذ', value: 64, color: 'var(--header-purple)' },
-      { label: 'محاولات دخول', value: 27, color: 'var(--card-purple)' },
-      { label: 'برمجيات خبيثة', value: 9, color: 'var(--alert-critical)' },
-    ],
-    chartBySeverity: 'التنبيهات النشطة حسب الخطورة',
-    severities: [
-      { label: 'حرج', value: 85 },
-      { label: 'عالي', value: 60 },
-      { label: 'متوسط', value: 45 },
-      { label: 'منخفض', value: 25 },
-    ],
-    chartByCategory: 'الأحداث حسب الفئة',
-    categories: [
-      { label: 'أقل من 10', value: 95 },
-      { label: '10 - 50', value: 70 },
-      { label: '50 - 100', value: 45 },
-      { label: 'أكثر من 100', value: 25 },
-    ],
+    chartBySeverity: 'التوزيع حسب الخطورة',
+    chartByCategory: 'توزيع حقل الثقة (confidence)',
+    dataError: 'تعذر تحميل الإحصائيات من الخادم.',
     actions: {
       alerts: 'تقرير التنبيهات',
       analytics: 'التحليلات',
@@ -67,36 +95,19 @@ export default function Dashboard() {
       { id: 'medium', label: 'Medium' },
       { id: 'low', label: 'Low' },
     ],
-    kpis: [
-      { icon: '🛡️', label: "Today's threats", value: '12' },
-      { icon: '📊', label: 'Detection accuracy', value: '97%' },
-      { icon: '⚠️', label: 'Critical alerts', value: '3', critical: true },
-      { icon: '⏱️', label: 'Avg response time', value: '1.2s' },
-    ],
-    chartThreatsAndAlerts: 'Threats & alerts',
-    legendThreats: 'Threats',
-    legendAlerts: 'Alerts',
-    chartByType: 'Threats by type',
+    kpiTotal: 'Total alerts',
+    kpiConfidence: 'Avg confidence',
+    kpiCritical: 'Critical alerts',
+    kpiSources: 'Unique source IPs',
+    noConfidence: '—',
+    chartTrend: 'Alerts (last 12 months)',
+    legendElevated: 'Critical / High',
+    legendRest: 'Medium / Low / unset',
+    chartByType: 'Attack types (from database)',
     donutCenter: 'Types',
-    donutData: [
-      { label: 'Port scan', value: 64, color: 'var(--header-purple)' },
-      { label: 'Brute force', value: 27, color: 'var(--card-purple)' },
-      { label: 'Malware', value: 9, color: 'var(--alert-critical)' },
-    ],
-    chartBySeverity: 'Active alerts by severity',
-    severities: [
-      { label: 'Critical', value: 85 },
-      { label: 'High', value: 60 },
-      { label: 'Medium', value: 45 },
-      { label: 'Low', value: 25 },
-    ],
-    chartByCategory: 'Events by category',
-    categories: [
-      { label: '< 10', value: 95 },
-      { label: '10 - 50', value: 70 },
-      { label: '50 - 100', value: 45 },
-      { label: '> 100', value: 25 },
-    ],
+    chartBySeverity: 'By severity',
+    chartByCategory: 'Confidence distribution',
+    dataError: 'Could not load stats from server.',
     actions: {
       alerts: 'Alerts report',
       analytics: 'Analytics',
@@ -105,11 +116,66 @@ export default function Dashboard() {
   }
 
   const stages = t.stages
-  const kpiCards = t.kpis
-  const donutData = t.donutData
-  const barSeverity = t.severities
-  const barCategory = t.categories
-  const areaChartMonths = lang === 'ar' ? areaChartMonthsAr : areaChartMonthsEn
+  const total = stats?.total ?? 0
+  const bySev = stats?.by_severity ?? { critical: 0, high: 0, medium: 0, low: 0 }
+  const criticalCount = bySev.critical ?? 0
+  const avgConf = stats?.avg_confidence
+  const confDisplay =
+    avgConf != null && !Number.isNaN(Number(avgConf))
+      ? `${Math.round(Number(avgConf))}%`
+      : t.noConfidence
+  const uniqueSources = stats?.unique_sources ?? 0
+
+  const kpiCards = useMemo(
+    () => [
+      { icon: '🛡️', label: t.kpiTotal, value: String(total) },
+      { icon: '📊', label: t.kpiConfidence, value: confDisplay },
+      { icon: '⚠️', label: t.kpiCritical, value: String(criticalCount), critical: true },
+      { icon: '🌐', label: t.kpiSources, value: String(uniqueSources) },
+    ],
+    [t, total, confDisplay, criticalCount, uniqueSources],
+  )
+
+  const byMonth = stats?.by_month ?? []
+  const maxMonthTotal = Math.max(1, ...byMonth.map((m) => m.total || 0))
+
+  const donutSlices = useMemo(() => {
+    const types = stats?.attack_types ?? []
+    if (!total || !types.length) {
+      return lang === 'ar'
+        ? [{ label: 'لا بيانات', value: 100, color: 'var(--border-input)' }]
+        : [{ label: 'No data', value: 100, color: 'var(--border-input)' }]
+    }
+    return types.slice(0, 3).map((row, i) => ({
+      label: row.type,
+      value: Math.round(((row.count || 0) / total) * 100),
+      color: DONUT_COLORS[i % DONUT_COLORS.length],
+    }))
+  }, [stats, total, lang])
+
+  const donutTypeCount = (stats?.attack_types ?? []).length
+
+  const barSeverity = useMemo(() => {
+    const denom = total || 1
+    const label = (id) => stages.find((s) => s.id === id)?.label ?? id
+    return [
+      { label: label('critical'), value: Math.round(((bySev.critical || 0) / denom) * 100) },
+      { label: label('high'), value: Math.round(((bySev.high || 0) / denom) * 100) },
+      { label: label('medium'), value: Math.round(((bySev.medium || 0) / denom) * 100) },
+      { label: label('low'), value: Math.round(((bySev.low || 0) / denom) * 100) },
+    ]
+  }, [stages, bySev, total])
+
+  const barCategory = useMemo(() => {
+    const buckets = stats?.confidence_buckets ?? []
+    if (!buckets.length) {
+      return [{ label: lang === 'ar' ? 'لا بيانات' : 'No data', value: 0 }]
+    }
+    return buckets.map((b) => ({
+      label: bucketLabel(b.key, lang),
+      value: b.pct ?? 0,
+    }))
+  }, [stats, lang])
 
   return (
     <div className={styles.wrapper}>
@@ -132,6 +198,12 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {loadError && (
+        <p style={{ color: 'var(--alert-critical)', marginBottom: '0.75rem', fontSize: '0.95rem' }}>
+          {t.dataError} ({loadError})
+        </p>
+      )}
+
       <section className={styles.kpiRow}>
         {kpiCards.map((k) => (
           <div
@@ -147,22 +219,22 @@ export default function Dashboard() {
 
       <section className={styles.chartsGrid}>
         <div className={styles.chartWidget}>
-          <h3 className={styles.chartTitle}>{t.chartThreatsAndAlerts}</h3>
+          <h3 className={styles.chartTitle}>{t.chartTrend}</h3>
           <div className={styles.areaChart}>
             <div className={styles.areaChartInner}>
-              {areaChartMonths.map((_, i) => (
-                <div key={i} className={styles.areaBarWrap}>
+              {byMonth.map((m) => (
+                <div key={m.ym} className={styles.areaBarWrap}>
                   <div
                     className={styles.areaBar}
                     style={{
-                      height: `${(areaChartThreats[i] / 25) * 100}%`,
+                      height: `${((m.elevated || 0) / maxMonthTotal) * 100}%`,
                       background: 'var(--header-purple)',
                     }}
                   />
                   <div
                     className={styles.areaBar}
                     style={{
-                      height: `${(areaChartAlerts[i] / 15) * 100}%`,
+                      height: `${((m.rest || 0) / maxMonthTotal) * 100}%`,
                       background: 'var(--card-purple)',
                     }}
                   />
@@ -170,12 +242,12 @@ export default function Dashboard() {
               ))}
             </div>
             <div className={styles.areaLegend}>
-              <span><i style={{ background: 'var(--header-purple)' }} /> {t.legendThreats}</span>
-              <span><i style={{ background: 'var(--card-purple)' }} /> {t.legendAlerts}</span>
+              <span><i style={{ background: 'var(--header-purple)' }} /> {t.legendElevated}</span>
+              <span><i style={{ background: 'var(--card-purple)' }} /> {t.legendRest}</span>
             </div>
             <div className={styles.areaMonths}>
-              {areaChartMonths.slice(0, 6).map((m) => (
-                <span key={m}>{m.slice(0, 3)}</span>
+              {byMonth.slice(-6).map((m) => (
+                <span key={m.ym}>{monthShortLabel(m.ym, lang)}</span>
               ))}
             </div>
           </div>
@@ -187,11 +259,11 @@ export default function Dashboard() {
             <div className={styles.donut}>
               <div className={styles.donutCenter}>
                 <span className={styles.donutCenterLabel}>{t.donutCenter}</span>
-                <span className={styles.donutCenterValue}>3</span>
+                <span className={styles.donutCenterValue}>{donutTypeCount}</span>
               </div>
             </div>
             <div className={styles.donutLegend}>
-              {donutData.map((d) => (
+              {donutSlices.map((d) => (
                 <span key={d.label}><i style={{ background: d.color }} /> {d.label} {d.value}%</span>
               ))}
             </div>
@@ -234,9 +306,9 @@ export default function Dashboard() {
       </section>
 
       <div className={styles.actions}>
-        <Link to="/alerts" className={styles.actionBtn}>{t.actions.alerts}</Link>
-        <Link to="/analytics" className={styles.actionBtn}>{t.actions.analytics}</Link>
-        <Link to="/monitoring" className={styles.actionBtn}>{t.actions.monitoring}</Link>
+        <Link to="/app/alerts" className={styles.actionBtn}>{t.actions.alerts}</Link>
+        <Link to="/app/analytics" className={styles.actionBtn}>{t.actions.analytics}</Link>
+        <Link to="/app/monitoring" className={styles.actionBtn}>{t.actions.monitoring}</Link>
       </div>
     </div>
   )

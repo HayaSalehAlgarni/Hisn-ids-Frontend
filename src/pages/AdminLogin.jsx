@@ -6,7 +6,7 @@ import { useLang } from '../context/lang'
 import { postJson, API_BASE_URL } from '../api/client'
 import { loginErrorMessage } from '../api/loginErrors'
 
-export default function Login() {
+export default function AdminLogin() {
   const navigate = useNavigate()
   const { lang } = useLang()
   const [email, setEmail] = useState('')
@@ -15,63 +15,69 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
 
   const t = {
-    email:    { ar: 'البريد الإلكتروني', en: 'Email' },
-    password: { ar: 'كلمة المرور',       en: 'Password' },
-    submit:   { ar: 'تسجيل الدخول',      en: 'Login' },
-    loading:  { ar: 'جاري الدخول...',    en: 'Signing in...' },
-    error:    { ar: 'يرجى إدخال البريد الإلكتروني وكلمة المرور',
-                en: 'Please enter your email and password' },
-    invalid:  { ar: 'بيانات الدخول غير صحيحة',
-                en: 'Invalid email or password' },
-    suspended: { ar: 'الحساب موقوف',
-                en: 'Account is suspended' },
-    failed:   { ar: 'تعذر تسجيل الدخول، حاول مرة أخرى',
-                en: 'Login failed, please try again' },
+    title: { ar: 'لوحة الإدارة', en: 'Administration' },
+    email: { ar: 'البريد الإلكتروني', en: 'Email' },
+    password: { ar: 'كلمة المرور', en: 'Password' },
+    submit: { ar: 'دخول المدير', en: 'Admin sign in' },
+    loading: { ar: 'جاري الدخول...', en: 'Signing in...' },
+    need: { ar: 'يرجى إدخال البريد وكلمة المرور', en: 'Please enter email and password' },
+    invalid: { ar: 'بيانات الدخول غير صحيحة', en: 'Invalid email or password' },
+    forbidden: {
+      ar: 'هذا الحساب ليس لديه صلاحية لوحة الإدارة',
+      en: 'This account does not have admin access',
+    },
+    suspended: {
+      ar: 'الحساب موقوف',
+      en: 'Account is suspended',
+    },
+    failed: { ar: 'تعذر تسجيل الدخول', en: 'Login failed' },
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     if (!email.trim() || !password) {
-      setError(t.error[lang])
+      setError(t.need[lang])
       return
     }
     setLoading(true)
     try {
       const data = await postJson('/api/auth/login', { email: email.trim(), password })
-      const userEmail = data?.user?.email || email.trim()
+      const role = data?.user?.role
+      if (role !== 'admin' && role !== 'super_admin') {
+        setError(t.forbidden[lang])
+        return
+      }
       if (data?.token) localStorage.setItem('hisn_token', data.token)
-      localStorage.setItem('hisn_user', JSON.stringify(data?.user || { email: userEmail }))
-      navigate('/app', { replace: true })
+      localStorage.setItem('hisn_user', JSON.stringify(data.user || { email: email.trim() }))
+      navigate('/admin/app', { replace: true })
     } catch (err) {
       const msg = String(err?.message || '')
       const mapped = loginErrorMessage(msg, lang)
-      if (mapped) {
-        setError(mapped)
-      } else if (msg.includes('invalid_credentials')) {
-        setError(t.invalid[lang])
-      } else if (msg.includes('account_suspended')) {
-        setError(t.suspended[lang])
-      } else {
+      if (mapped) setError(mapped)
+      else if (msg.includes('invalid_credentials')) setError(t.invalid[lang])
+      else if (msg.includes('account_suspended')) setError(t.suspended[lang])
+      else
         setError(
           lang === 'ar'
-            ? `${t.failed[lang]} (${msg}). الخادم: ${API_BASE_URL}`
-            : `${t.failed[lang]} (${msg}). API: ${API_BASE_URL}`,
+            ? `${t.failed[lang]} — ${msg}. الخادم: ${API_BASE_URL}`
+            : `${t.failed[lang]} — ${msg}. API: ${API_BASE_URL}`,
         )
-      }
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <AuthLayout title="تسجيل الدخول">
+    <AuthLayout title={t.title[lang]}>
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="email">{t.email[lang]}</label>
+          <label className={styles.label} htmlFor="admin-email">
+            {t.email[lang]}
+          </label>
           <input
-            id="email"
+            id="admin-email"
             type="email"
             className={styles.input}
             value={email}
@@ -81,9 +87,11 @@ export default function Login() {
           />
         </div>
         <div className={styles.field}>
-          <label className={styles.label} htmlFor="password">{t.password[lang]}</label>
+          <label className={styles.label} htmlFor="admin-password">
+            {t.password[lang]}
+          </label>
           <input
-            id="password"
+            id="admin-password"
             type="password"
             className={styles.input}
             value={password}

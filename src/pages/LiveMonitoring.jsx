@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import styles from './LiveMonitoring.module.css'
 import { useLang } from '../context/lang'
+import { fetchAlerts, normalizeSeverity, toUiAlert } from '../api/alerts'
 
 const TYPE_OPTIONS = [
   { id: 'all', label: { ar: 'الكل', en: 'All' } },
@@ -22,38 +23,9 @@ const TYPE_ICONS = {
   Normal: '✓',
 }
 
-const typeFromLabel = (label) => {
-  if (label.includes('DNS') || label === 'DNS query') return 'DNS'
-  if (label.includes('Suspicious') || label.includes('port scan') || label.includes('intrusion') || label.includes('failed logins')) return 'Suspicious'
-  return 'Normal'
-}
-
-const generateMockEvents = (count = 150) => {
-  const types = ['DNS query', 'Suspicious port scan', 'Normal traffic', 'Multiple failed logins', 'HTTPS', 'Possible intrusion']
-  const severities = ['high', 'medium', 'low']
-  const events = []
-  const now = Date.now()
-  for (let i = 0; i < count; i++) {
-    const severity = severities[Math.floor(Math.random() * 3)]
-    const typeLabel = types[Math.floor(Math.random() * types.length)]
-    events.push({
-      id: now - i * 1000,
-      time: new Date(now - i * 1000).toLocaleTimeString('en-GB', { hour12: false }),
-      src: `192.168.1.${Math.floor(Math.random() * 255)}`,
-      dst: `10.0.0.${Math.floor(Math.random() * 50)}`,
-      type: typeLabel,
-      typeKey: typeFromLabel(typeLabel),
-      severity,
-    })
-  }
-  return events
-}
-
-const initialEvents = generateMockEvents(150)
-
 export default function LiveMonitoring() {
   const { lang } = useLang()
-  const [events, setEvents] = useState(initialEvents)
+  const [events, setEvents] = useState([])
   const [live, setLive] = useState(true)
   const [lastUpdate, setLastUpdate] = useState(() => Date.now())
   const [filterSeverity, setFilterSeverity] = useState('all')
@@ -64,19 +36,29 @@ export default function LiveMonitoring() {
 
   useEffect(() => {
     if (!live) return
-    const t = setInterval(() => {
-      const newEvent = {
-        id: Date.now(),
-        time: new Date().toLocaleTimeString('en-GB', { hour12: false }),
-        src: `192.168.1.${Math.floor(Math.random() * 255)}`,
-        dst: `10.0.0.${Math.floor(Math.random() * 50)}`,
-        type: ['Normal traffic', 'Suspicious activity', 'DNS query'][Math.floor(Math.random() * 3)],
-        typeKey: ['Normal', 'Suspicious', 'DNS'][Math.floor(Math.random() * 3)],
-        severity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
+    const load = async () => {
+      try {
+        const rows = await fetchAlerts()
+        const mapped = rows.map((row) => {
+          const alert = toUiAlert(row)
+          return {
+            id: alert.id,
+            time: alert.time,
+            src: alert.source,
+            dst: alert.destination,
+            type: alert.attackType,
+            typeKey: alert.type,
+            severity: normalizeSeverity(alert.severity),
+          }
+        })
+        setEvents(mapped.slice(0, 150))
+        setLastUpdate(Date.now())
+      } catch {
+        setEvents([])
       }
-      setEvents((prev) => [newEvent, ...prev.slice(0, 149)])
-      setLastUpdate(Date.now())
-    }, 3000)
+    }
+    load()
+    const t = setInterval(load, 5000)
     return () => clearInterval(t)
   }, [live])
 

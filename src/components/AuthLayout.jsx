@@ -6,6 +6,8 @@ export default function AuthLayout({ children, title }) {
 
   const titles = {
     'تسجيل الدخول': { ar: 'تسجيل الدخول', en: 'Login' },
+    'اختيار الحساب': { ar: 'اختيار نوع الحساب', en: 'Choose account type' },
+    'مدير النظام': { ar: 'مدير النظام', en: 'System administrator' },
   }
 
   const displayTitle = titles[title]?.[lang] ?? title

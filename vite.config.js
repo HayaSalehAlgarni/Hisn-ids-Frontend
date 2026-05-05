@@ -5,7 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    strictPort: false,
+    // ثابت مع CORS الباكند؛ إذا كان المنفذ مشغولاً أوقف العملية القديمة أو غيّر المنفذ يدوياً
+    strictPort: true,
     open: true,
   },
 })

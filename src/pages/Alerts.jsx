@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import styles from './Alerts.module.css'
 import { useLang } from '../context/lang'
+import { fetchAlerts, toUiAlert } from '../api/alerts'
 
 const TYPE_CONFIG = {
   login: { label: { ar: 'دخول', en: 'Login' }, icon: '🔐' },
@@ -10,20 +11,20 @@ const TYPE_CONFIG = {
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 }
 
-const initialAlerts = [
-  { id: 1, title: { ar: 'محاولة تسجيل دخول فاشلة متعددة', en: 'Multiple failed login attempts' }, source: '192.168.1.50', time: '17:05:43', severity: 'critical', type: 'login', archived: false },
-  { id: 2, title: { ar: 'مسح منافذ مشبوه', en: 'Suspicious port scan detected' }, source: '10.0.0.22', time: '16:58:12', severity: 'high', type: 'scan', archived: false },
-  { id: 3, title: { ar: 'حركة غير عادية', en: 'Abnormal traffic pattern' }, source: '192.168.1.105', time: '16:45:30', severity: 'medium', type: 'traffic', archived: false },
-  { id: 4, title: { ar: 'تحديث نظام', en: 'System update event' }, source: 'System', time: '16:30:00', severity: 'low', type: 'traffic', archived: false },
-  { id: 5, title: { ar: 'محاولة دخول غير مصرح', en: 'Unauthorized access attempt' }, source: '192.168.1.88', time: '16:22:18', severity: 'critical', type: 'login', archived: false },
-  { id: 6, title: { ar: 'مسح شبكة من مصدر خارجي', en: 'External network scan activity' }, source: '10.0.0.5', time: '16:15:00', severity: 'high', type: 'scan', archived: false },
-]
+const mapType = (typeValue) => {
+  const value = String(typeValue || '').toLowerCase()
+  if (value.includes('suspicious')) return 'scan'
+  if (value.includes('dns')) return 'traffic'
+  return 'traffic'
+}
 
 export default function Alerts() {
   const { lang } = useLang()
-  const [alerts, setAlerts] = useState(initialAlerts)
+  const [alerts, setAlerts] = useState([])
   const [filter, setFilter] = useState('all')
   const [detailsId, setDetailsId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState('')
 
   const t = lang === 'ar' ? {
     title: 'التنبيهات',
@@ -31,19 +32,52 @@ export default function Alerts() {
     details: 'تفاصيل',
     resolved: 'تم المعالجة',
     empty: 'لا توجد تنبيهات تطابق الفلتر.',
+    loading: 'جاري تحميل التنبيهات...',
+    loadError: 'تعذر جلب التنبيهات من الخادم.',
     src: 'المصدر:',
+    dst: 'الوجهة:',
     time: 'الوقت:',
     type: 'النوع:',
+    protocol: 'البروتوكول:',
   } : {
     title: 'Alerts',
     filters: { all: 'All', critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
     details: 'Details',
     resolved: 'Resolve',
     empty: 'No alerts match the selected filter.',
+    loading: 'Loading alerts...',
+    loadError: 'Failed to load alerts from server.',
     src: 'Source:',
+    dst: 'Destination:',
     time: 'Time:',
     type: 'Type:',
+    protocol: 'Protocol:',
   }
+
+  const fetchAlerts = useCallback(async (showLoader = false) => {
+    if (showLoader) setLoading(true)
+    try {
+      const data = await fetchAlerts()
+      const mapped = data.map((row) => {
+        const alert = toUiAlert(row)
+        return { ...alert, type: mapType(alert.type), archived: false }
+      })
+      setAlerts(mapped)
+      setApiError('')
+    } catch (e) {
+      setApiError(e?.message || t.loadError)
+    } finally {
+      if (showLoader) setLoading(false)
+    }
+  }, [t.loadError])
+
+  useEffect(() => {
+    fetchAlerts(true)
+    const timer = setInterval(() => {
+      fetchAlerts(false)
+    }, 10000)
+    return () => clearInterval(timer)
+  }, [fetchAlerts])
 
   const markResolved = (id) => {
     setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, archived: true } : a)))
@@ -119,8 +153,10 @@ export default function Alerts() {
                 {detailsId === a.id && (
                   <div className={styles.detailsPanel}>
                     <p><strong>{t.src}</strong> {a.source}</p>
+                    <p><strong>{t.dst}</strong> {a.destination}</p>
                     <p><strong>{t.time}</strong> {a.time}</p>
                     <p><strong>{t.type}</strong> {typeInfo.label[lang] ?? typeInfo.label.en}</p>
+                    <p><strong>{t.protocol}</strong> {a.protocol}</p>
                   </div>
                 )}
               </div>
@@ -129,7 +165,20 @@ export default function Alerts() {
         })}
       </div>
 
-      {filtered.length === 0 && (
+      {loading && (
+        <div className={styles.empty}>
+          <p>{t.loading}</p>
+        </div>
+      )}
+
+      {!loading && apiError && (
+        <div className={styles.empty}>
+          <p>{t.loadError}</p>
+          <p>{apiError}</p>
+        </div>
+      )}
+
+      {!loading && !apiError && filtered.length === 0 && (
         <div className={styles.empty}>
           <p>{t.empty}</p>
         </div>

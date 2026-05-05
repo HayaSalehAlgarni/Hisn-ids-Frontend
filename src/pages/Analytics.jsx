@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import styles from './Analytics.module.css'
 import { useLang } from '../context/lang'
+import { fetchDashboardStats } from '../api/dashboard'
 
-const chartPlaceholder = (label) => (
+const chartPlaceholder = (label, points) => (
   <div className={styles.chartPlaceholder}>
     <div className={styles.chartBars}>
-      {[65, 82, 45, 90, 70, 55, 78].map((h, i) => (
+      {points.map((h, i) => (
         <div
           key={i}
           className={styles.bar}
@@ -20,6 +21,25 @@ const chartPlaceholder = (label) => (
 export default function Analytics() {
   const { lang } = useLang()
   const [period, setPeriod] = useState('7d')
+  const [stats, setStats] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const data = await fetchDashboardStats('all')
+        if (mounted) setStats(data)
+      } catch {
+        if (mounted) setStats(null)
+      }
+    }
+    load()
+    const timer = setInterval(load, 10000)
+    return () => {
+      mounted = false
+      clearInterval(timer)
+    }
+  }, [])
 
   const t = lang === 'ar' ? {
     title: 'التحليلات',
@@ -33,8 +53,9 @@ export default function Analytics() {
     malware: 'برمجيات خبيثة',
     other: 'أخرى',
     detectionAccuracy: 'دقة الكشف',
-    avgResponse: 'متوسط زمن الاستجابة',
+    uniqueSources: 'مصادر IP فريدة',
     todaysThreats: 'تهديدات اليوم',
+    noData: 'لا توجد بيانات',
   } : {
     title: 'Analytics',
     periods: { '24h': '24 hours', '7d': '7 days', '30d': '30 days' },
@@ -47,9 +68,48 @@ export default function Analytics() {
     malware: 'Malware',
     other: 'Other',
     detectionAccuracy: 'Detection accuracy',
-    avgResponse: 'Avg response time',
+    uniqueSources: 'Unique source IPs',
     todaysThreats: "Today's threats",
+    noData: 'No data',
   }
+
+  const threatStats = useMemo(() => {
+    const total = stats?.total || 0
+    const typeRows = stats?.attack_types || []
+    const denom = total || 1
+    const countByKeyword = (keyword) =>
+      typeRows
+        .filter((r) => String(r.type || '').toLowerCase().includes(keyword))
+        .reduce((sum, r) => sum + Number(r.count || 0), 0)
+    const portScanCount = countByKeyword('scan')
+    const loginsCount = countByKeyword('login')
+    const malwareCount = countByKeyword('malware')
+    const otherCount = Math.max(0, total - portScanCount - loginsCount - malwareCount)
+    return {
+      portScan: Math.round((portScanCount / denom) * 100),
+      logins: Math.round((loginsCount / denom) * 100),
+      malware: Math.round((malwareCount / denom) * 100),
+      other: Math.round((otherCount / denom) * 100),
+      totalCount: total,
+    }
+  }, [stats])
+
+  const chartHeights = useMemo(() => {
+    const points = stats?.by_month || []
+    const count = period === '24h' ? 1 : period === '7d' ? 7 : 12
+    const slice = points.slice(-count)
+    const maxVal = Math.max(1, ...slice.map((p) => Number(p.total || 0)))
+    if (!slice.length) return [0]
+    return slice.map((p) => Math.round((Number(p.total || 0) / maxVal) * 100))
+  }, [stats, period])
+
+  const confidenceValue = useMemo(() => {
+    const value = stats?.avg_confidence
+    if (value == null || Number.isNaN(Number(value))) return t.noData
+    return `${Math.round(Number(value))}%`
+  }, [stats, t.noData])
+
+  const uniqueSources = stats?.unique_sources ?? 0
 
   return (
     <div className={styles.wrapper}>
@@ -71,30 +131,30 @@ export default function Analytics() {
       <div className={styles.grid}>
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>{t.networkTraffic}</h3>
-          {chartPlaceholder(t.threatPatterns)}
+          {chartPlaceholder(t.threatPatterns, chartHeights)}
         </div>
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>{t.threatTypes}</h3>
           <ul className={styles.stats}>
-            <li><span className={styles.statLabel}>{t.portScan}</span><span className={styles.statValue}>34%</span></li>
-            <li><span className={styles.statLabel}>{t.logins}</span><span className={styles.statValue}>28%</span></li>
-            <li><span className={styles.statLabel}>{t.malware}</span><span className={styles.statValue}>22%</span></li>
-            <li><span className={styles.statLabel}>{t.other}</span><span className={styles.statValue}>16%</span></li>
+            <li><span className={styles.statLabel}>{t.portScan}</span><span className={styles.statValue}>{threatStats.portScan}%</span></li>
+            <li><span className={styles.statLabel}>{t.logins}</span><span className={styles.statValue}>{threatStats.logins}%</span></li>
+            <li><span className={styles.statLabel}>{t.malware}</span><span className={styles.statValue}>{threatStats.malware}%</span></li>
+            <li><span className={styles.statLabel}>{t.other}</span><span className={styles.statValue}>{threatStats.other}%</span></li>
           </ul>
         </div>
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>{t.kpis}</h3>
           <div className={styles.kpis}>
             <div className={styles.kpi}>
-              <span className={styles.kpiValue}>97%</span>
+              <span className={styles.kpiValue}>{confidenceValue}</span>
               <span className={styles.kpiLabel}>{t.detectionAccuracy}</span>
             </div>
             <div className={styles.kpi}>
-              <span className={styles.kpiValue}>1.2s</span>
-              <span className={styles.kpiLabel}>{t.avgResponse}</span>
+              <span className={styles.kpiValue}>{uniqueSources}</span>
+              <span className={styles.kpiLabel}>{t.uniqueSources}</span>
             </div>
             <div className={styles.kpi}>
-              <span className={styles.kpiValue}>12</span>
+              <span className={styles.kpiValue}>{threatStats.totalCount}</span>
               <span className={styles.kpiLabel}>{t.todaysThreats}</span>
             </div>
           </div>

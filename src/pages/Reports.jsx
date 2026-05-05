@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import styles from './Reports.module.css'
 import { useLang } from '../context/lang'
+import { fetchAlerts } from '../api/alerts'
 
 const reportTypes = [
   {
@@ -50,22 +51,40 @@ const reportTypes = [
 const exportFormats = [
   { id: 'pdf', label: 'PDF', icon: '📄' },
   { id: 'csv', label: 'CSV', icon: '📊' },
-  { id: 'json', label: 'JSON', icon: '{}' },
 ]
-
-const quickStats = {
-  total: 45,
-  critical: 5,
-  high: 12,
-  medium: 18,
-  low: 10,
-}
 
 export default function Reports() {
   const { lang } = useLang()
   const [selected, setSelected] = useState('daily')
   const [exportFormat, setExportFormat] = useState('pdf')
   const [generating, setGenerating] = useState(false)
+  const [alerts, setAlerts] = useState([])
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const rows = await fetchAlerts()
+        if (mounted) setAlerts(rows)
+      } catch {
+        if (mounted) setAlerts([])
+      }
+    }
+    load()
+    const timer = setInterval(load, 10000)
+    return () => {
+      mounted = false
+      clearInterval(timer)
+    }
+  }, [])
+
+  const quickStats = useMemo(() => ({
+    total: alerts.length,
+    critical: alerts.filter((a) => String(a.severity || '').toLowerCase() === 'critical').length,
+    high: alerts.filter((a) => String(a.severity || '').toLowerCase() === 'high').length,
+    medium: alerts.filter((a) => String(a.severity || '').toLowerCase() === 'medium').length,
+    low: alerts.filter((a) => String(a.severity || '').toLowerCase() === 'low').length,
+  }), [alerts])
 
   const handleGenerate = () => {
     setGenerating(true)

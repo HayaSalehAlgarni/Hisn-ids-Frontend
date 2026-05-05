@@ -1,12 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import styles from './Settings.module.css'
 import { useLang } from '../context/lang'
-
-// Backend endpoints (current repo backend is Flask on :5000)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000'
-const OTP_SEND_ENDPOINT = `${API_BASE_URL}/api/auth/password-reset/send-otp`
-const OTP_VERIFY_ENDPOINT = `${API_BASE_URL}/api/auth/password-reset/verify-otp`
-const PASSWORD_RESET_ENDPOINT = `${API_BASE_URL}/api/auth/password-reset/confirm`
+import { postJson } from '../api/client'
 
 const ALERT_OPTIONS = [
   { id: 'critical', label: 'CRITICAL فقط' },
@@ -23,6 +19,7 @@ const REFRESH_OPTIONS = [
 
 export default function Settings() {
   const { lang, setLang } = useLang()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('account') // 'account' | 'system'
 
   const [alertThreshold, setAlertThreshold] = useState('high')
@@ -50,6 +47,8 @@ export default function Settings() {
   const [resetLoading, setResetLoading] = useState(false)
   const [resetError, setResetError] = useState('')
   const [resetSuccess, setResetSuccess] = useState('')
+  /** After send-otp: hint user where to find the code (email vs Flask console). */
+  const [otpDeliveryHint, setOtpDeliveryHint] = useState('')
 
   const t = lang === 'ar' ? {
     title: 'الإعدادات',
@@ -70,7 +69,8 @@ export default function Settings() {
       criticalOnly: 'CRITICAL فقط',
       all: 'الكل',
     },
-    save: 'حفظ التغييرات',
+    emailReadOnly: 'للقراءة فقط - لا يمكن تعديل البريد الإلكتروني.',
+    logout: 'تسجيل الخروج',
     reset: {
       title: 'إعادة تعيين كلمة المرور',
       step1: 'تأكيد الإرسال',
@@ -91,6 +91,13 @@ export default function Settings() {
       otpInvalid: 'يرجى إدخال رمز مكون من 6 أرقام.',
       passwordMismatch: 'كلمة المرور وتأكيدها غير متطابقين.',
       passwordTooShort: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل.',
+      emailDeliveryHint:
+        'تحقق من بريدك الوارد ومجلد الرسائل غير المرغوب فيها (Spam). إن لم يصل شيء، راجع إعدادات SMTP في الخادم.',
+      consoleDeliveryHint:
+        'لم يُرسل بريد — غالباً لأن SMTP غير مضبوط أو وضع التطوير مفعّل. افتح نافذة الطرفية التي يعمل فيها خادم Flask؛ يُطبع فيها رمز التحقق.',
+      smtpNotConfigured:
+        'لم يُضبط إرسال البريد (SMTP). املأ SMTP_* في ملف .env أو فعّل OTP_ALLOW_WITHOUT_SMTP للتطوير واطلع على طرفية الخادم.',
+      otpSendFailed: 'تعذّر إرسال البريد. تحقق من إعدادات SMTP أو اتصال الخادم.',
     },
   } : {
     title: 'Settings',
@@ -111,7 +118,8 @@ export default function Settings() {
       criticalOnly: 'CRITICAL only',
       all: 'All',
     },
-    save: 'Save changes',
+    emailReadOnly: 'Read-only: email cannot be edited.',
+    logout: 'Log out',
     reset: {
       title: 'Reset password',
       step1: 'Confirm send',
@@ -132,12 +140,20 @@ export default function Settings() {
       otpInvalid: 'Please enter a 6-digit code.',
       passwordMismatch: 'Passwords do not match.',
       passwordTooShort: 'Password must be at least 6 characters.',
+      emailDeliveryHint:
+        'Check your inbox and spam folder. If nothing arrives, verify SMTP settings on the server.',
+      consoleDeliveryHint:
+        'No email was sent — SMTP is likely unset or dev mode is on. Open the Flask server terminal; the OTP is printed there.',
+      smtpNotConfigured:
+        'Email (SMTP) is not configured. Set SMTP_* in .env or enable OTP_ALLOW_WITHOUT_SMTP for dev and read the server log.',
+      otpSendFailed: 'Could not send email. Check SMTP settings or server connectivity.',
     },
   }
 
   const openResetModal = () => {
     setResetError('')
     setResetSuccess('')
+    setOtpDeliveryHint('')
     setResetLoading(false)
     setResetStep(1)
     setOtpCode('')
@@ -148,25 +164,7 @@ export default function Settings() {
 
   const closeResetModal = () => {
     setResetOpen(false)
-  }
-
-  const apiPost = async (url, body) => {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body ?? {}),
-    })
-    let data = null
-    try {
-      data = await res.json()
-    } catch {
-      data = null
-    }
-    if (!res.ok) {
-      const msg = (data && (data.detail || data.message)) || `Request failed (${res.status})`
-      throw new Error(msg)
-    }
-    return data
+    setOtpDeliveryHint('')
   }
 
   const handleSendOtp = async () => {
@@ -178,10 +176,16 @@ export default function Settings() {
     }
     setResetLoading(true)
     try {
-      await apiPost(OTP_SEND_ENDPOINT, { email: userEmail })
+      const data = await postJson('/api/auth/password-reset/send-otp', { email: userEmail })
+      setOtpDeliveryHint(
+        data?.delivery === 'console' ? t.reset.consoleDeliveryHint : t.reset.emailDeliveryHint,
+      )
       setResetStep(2)
     } catch (e) {
-      setResetError(e?.message || 'Failed to send OTP.')
+      const m = String(e?.message || '')
+      if (m === 'smtp_not_configured') setResetError(t.reset.smtpNotConfigured)
+      else if (m === 'otp_send_failed') setResetError(t.reset.otpSendFailed)
+      else setResetError(m || (lang === 'ar' ? 'تعذّر إرسال الرمز.' : 'Failed to send OTP.'))
     } finally {
       setResetLoading(false)
     }
@@ -197,7 +201,7 @@ export default function Settings() {
     }
     setResetLoading(true)
     try {
-      await apiPost(OTP_VERIFY_ENDPOINT, { email: userEmail, code })
+      await postJson('/api/auth/password-reset/verify-otp', { email: userEmail, code })
       setResetStep(3)
     } catch (e) {
       setResetError(e?.message || 'OTP verification failed.')
@@ -228,7 +232,7 @@ export default function Settings() {
     }
     setResetLoading(true)
     try {
-      await apiPost(PASSWORD_RESET_ENDPOINT, { email: userEmail, code, new_password: newPassword })
+      await postJson('/api/auth/password-reset/confirm', { email: userEmail, code, new_password: newPassword })
       setResetSuccess(t.reset.success)
       setTimeout(() => {
         closeResetModal()
@@ -238,6 +242,12 @@ export default function Settings() {
     } finally {
       setResetLoading(false)
     }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('hisn_user')
+    localStorage.removeItem('hisn_token')
+    navigate('/', { replace: true })
   }
 
   return (
@@ -282,7 +292,8 @@ export default function Settings() {
               <h3 className={styles.sectionTitle}>{t.sections.account}</h3>
               <div className={styles.field}>
                 <label className={styles.label}>{t.email}</label>
-                <input type="email" className={styles.input} value={userEmail} readOnly />
+                <input type="email" className={styles.input} value={userEmail} readOnly aria-readonly="true" />
+                <small className={styles.readOnlyHint}>{t.emailReadOnly}</small>
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>{t.language}</label>
@@ -362,11 +373,13 @@ export default function Settings() {
         )}
       </div>
 
-      <div className={styles.actions}>
-        <button type="button" className={styles.saveBtn}>
-          {t.save}
-        </button>
-      </div>
+      {activeTab === 'account' && (
+        <div className={styles.actions}>
+          <button type="button" className={styles.logoutBtn} onClick={handleLogout}>
+            {t.logout}
+          </button>
+        </div>
+      )}
 
       {resetOpen && (
         <div
@@ -403,6 +416,9 @@ export default function Settings() {
 
             {resetError && <div className={styles.errorMsg}>{resetError}</div>}
             {resetSuccess && <div className={styles.successMsg}>{resetSuccess}</div>}
+            {resetStep === 2 && otpDeliveryHint && (
+              <div className={styles.infoMsg}>{otpDeliveryHint}</div>
+            )}
 
             {resetStep === 1 && (
               <>
@@ -444,6 +460,7 @@ export default function Settings() {
                     onClick={() => {
                       setResetError('')
                       setResetSuccess('')
+                      setOtpDeliveryHint('')
                       setResetStep(1)
                     }}
                     disabled={resetLoading}
