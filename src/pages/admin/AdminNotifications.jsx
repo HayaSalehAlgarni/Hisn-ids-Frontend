@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useLang } from '../../context/lang'
 import { getJsonAuth } from '../../api/client'
 import { activityActionLabel, activityRowClass } from './adminLabels'
+import { formatActivityDetails } from './activityDetails'
 import s from './adminShared.module.css'
 
 const ICON = {
   login: '🔐',
+  failed_login_alert: '🚨',
   user_create: '➕',
   user_update: '✏️',
   user_delete: '🗑️',
@@ -45,8 +47,8 @@ export default function AdminNotifications() {
       <h1 className={s.pageTitle}>{copy.title[lang]}</h1>
       <p className={s.muted} style={{ marginBottom: '1rem' }}>
         {lang === 'ar'
-          ? 'تسجيل الدخول، إنشاء/تحديث/حذف مستخدم، وإعادة كلمة مرور، مع ملخص التنبيهات.'
-          : 'Logins, user create/update/delete, password resets, plus alerts summary.'}
+          ? 'بيانات حقيقية من الخادم: تسجيل الدخول، تنبيهات محاولات الدخول الفاشلة، إدارة المستخدمين، وملخص التنبيهات الأمنية.'
+          : 'Live data from the server: logins, brute-force alerts, user admin actions, and security alert summaries.'}
       </p>
       {err && <p className={s.error}>{err}</p>}
       <div className={s.listStack}>
@@ -70,6 +72,7 @@ export default function AdminNotifications() {
               )
             }
             const ic = ICON[it.action] || '📌'
+            const detailLine = formatActivityDetails(it, lang)
             return (
               <div
                 key={it.id}
@@ -80,6 +83,7 @@ export default function AdminNotifications() {
                 <div>
                   <strong>{activityActionLabel(it.action, lang)}</strong>
                   <div className={s.muted}>
+                    {detailLine !== '—' ? <span>{detailLine} · </span> : null}
                     {it.actor_label || it.actor_user_id || '—'}
                     {it.target_label || it.target_user_id
                       ? ` → ${it.target_label || it.target_user_id}`

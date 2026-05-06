@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import styles from './Alerts.module.css'
 import { useLang } from '../context/lang'
-import { fetchAlerts, toUiAlert } from '../api/alerts'
+import { fetchAlerts as fetchAlertsApi, toUiAlert } from '../api/alerts'
 
 const TYPE_CONFIG = {
   login: { label: { ar: 'دخول', en: 'Login' }, icon: '🔐' },
@@ -13,6 +13,7 @@ const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 }
 
 const mapType = (typeValue) => {
   const value = String(typeValue || '').toLowerCase()
+  if (value.includes('failed_login') || value.includes('login')) return 'login'
   if (value.includes('suspicious')) return 'scan'
   if (value.includes('dns')) return 'traffic'
   return 'traffic'
@@ -54,13 +55,18 @@ export default function Alerts() {
     protocol: 'Protocol:',
   }
 
-  const fetchAlerts = useCallback(async (showLoader = false) => {
+  const loadAlerts = useCallback(async (showLoader = false) => {
     if (showLoader) setLoading(true)
     try {
-      const data = await fetchAlerts()
-      const mapped = data.map((row) => {
+      const rows = await fetchAlertsApi()
+      const list = Array.isArray(rows) ? rows : []
+      const mapped = list.map((row) => {
         const alert = toUiAlert(row)
-        return { ...alert, type: mapType(alert.type), archived: false }
+        return {
+          ...alert,
+          type: mapType(row.attack_type || alert.attackType),
+          archived: false,
+        }
       })
       setAlerts(mapped)
       setApiError('')
@@ -72,12 +78,12 @@ export default function Alerts() {
   }, [t.loadError])
 
   useEffect(() => {
-    fetchAlerts(true)
+    loadAlerts(true)
     const timer = setInterval(() => {
-      fetchAlerts(false)
+      loadAlerts(false)
     }, 10000)
     return () => clearInterval(timer)
-  }, [fetchAlerts])
+  }, [loadAlerts])
 
   const markResolved = (id) => {
     setAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, archived: true } : a)))
@@ -88,7 +94,10 @@ export default function Alerts() {
 
   const filtered = useMemo(() => {
     let list = filter === 'all' ? activeAlerts : activeAlerts.filter((a) => a.severity === filter)
-    return [...list].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity])
+    return [...list].sort(
+      (a, b) =>
+        (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99),
+    )
   }, [activeAlerts, filter])
 
   return (
@@ -115,7 +124,7 @@ export default function Alerts() {
           return (
             <article
               key={a.id}
-              className={`${styles.alertCard} ${styles[`card_${a.severity}`]}`}
+              className={`${styles.alertCard} ${styles[`card_${a.severity}`] || ''}`}
             >
               <div className={styles.cardLeftBorder} />
               <div className={styles.cardBody}>
@@ -123,11 +132,13 @@ export default function Alerts() {
                   <span className={styles.typeIcon} title={typeInfo.label[lang] ?? typeInfo.label.en}>
                     {typeInfo.icon}
                   </span>
-                  <span className={`${styles.severityBadge} ${styles[`badge_${a.severity}`]}`}>
-                    {a.severity.toUpperCase()}
+                  <span className={`${styles.severityBadge} ${styles[`badge_${a.severity}`] || ''}`}>
+                    {(a.severity || 'low').toUpperCase()}
                   </span>
                 </div>
-                <h3 className={styles.alertTitle}>{a.title?.[lang] ?? a.title?.en ?? a.title}</h3>
+                <h3 className={styles.alertTitle}>
+                  {typeof a.title === 'string' ? a.title : a.title?.[lang] ?? a.title?.en ?? ''}
+                </h3>
                 <div className={styles.alertMeta}>
                   <span className={styles.source}>
                     <code>{a.source}</code>

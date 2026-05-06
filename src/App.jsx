@@ -25,12 +25,17 @@ function App() {
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/app" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
+        <Route path="security" element={<Dashboard linkPrefix="/admin/app" />} />
+        <Route path="monitoring" element={<LiveMonitoring />} />
+        <Route path="alerts" element={<Alerts />} />
+        <Route path="reports" element={<Reports />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="profile" element={<Navigate to="/admin/app/settings" replace />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="create-user" element={<AdminCreateUser />} />
         <Route path="activity" element={<AdminActivity />} />
         <Route path="notifications" element={<AdminNotifications />} />
-        <Route path="settings" element={<AdminSettings />} />
-        <Route path="profile" element={<Navigate to="/admin/app/settings" replace />} />
       </Route>
       <Route path="/app" element={<Layout />}>
         <Route index element={<Dashboard />} />

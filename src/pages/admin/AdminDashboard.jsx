@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useLang } from '../../context/lang'
 import { getJsonAuth } from '../../api/client'
 import { activityActionLabel, activityRowClass } from './adminLabels'
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
   }, [lang, chartRange])
 
   const copy = {
-    title: { ar: 'لوحة تحكم الإدارة', en: 'Admin dashboard' },
+    title: { ar: 'لوحة الإدارة', en: 'Admin dashboard' },
     total: { ar: 'إجمالي المستخدمين', en: 'Total users' },
     active: { ar: 'نشط', en: 'Active' },
     suspended: { ar: 'موقوف', en: 'Suspended' },
@@ -101,6 +102,11 @@ export default function AdminDashboard() {
     legV: { ar: 'أحداث', en: 'Events' },
     emptyRecent: { ar: 'لا يوجد نشاط بعد', en: 'No activity yet' },
     emptyChart: { ar: 'لا بيانات للفترة', en: 'No data for this period' },
+    securityWarn: {
+      ar: 'تم رصد محاولات تسجيل دخول فاشلة متكررة خلال آخر 24 ساعة. راجع سجل النشاط لكل محاولة والتفاصيل.',
+      en: 'Repeated failed login attempts were detected in the last 24 hours. Review the activity log for each attempt and details.',
+    },
+    securityLink: { ar: 'عرض سجل النشاط', en: 'View activity log' },
   }
 
   const alertsDay = data?.alerts_by_day || []
@@ -110,6 +116,19 @@ export default function AdminDashboard() {
     <div>
       <h1 className={s.pageTitle}>{copy.title[lang]}</h1>
       {err && <p className={s.error}>{err}</p>}
+      {data && Number(data.failed_login_alerts_24h) > 0 ? (
+        <div className={s.securityBanner} role="status">
+          <span className={s.securityBannerIcon} aria-hidden>
+            ⚠️
+          </span>
+          <div className={s.securityBannerBody}>
+            <p className={s.securityBannerText}>{copy.securityWarn[lang]}</p>
+            <Link className={s.securityBannerLink} to="/admin/app/activity">
+              {copy.securityLink[lang]}
+            </Link>
+          </div>
+        </div>
+      ) : null}
       {data && (
         <>
           <div className={s.grid}>

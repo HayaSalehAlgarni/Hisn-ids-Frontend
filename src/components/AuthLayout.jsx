@@ -1,7 +1,9 @@
+import { useNavigate } from 'react-router-dom'
 import styles from './AuthLayout.module.css'
 import { useLang } from '../context/lang'
 
-export default function AuthLayout({ children, title }) {
+export default function AuthLayout({ children, title, backTo }) {
+  const navigate = useNavigate()
   const { lang, setLang } = useLang()
 
   const titles = {
@@ -24,23 +26,26 @@ export default function AuthLayout({ children, title }) {
         </div>
         <div className={styles.right} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
           <div className={styles.formCard}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.75rem' }}>
-              {title && <h1 className={styles.formTitle} style={{ margin: 0 }}>{displayTitle}</h1>}
-              <button
-                onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-                style={{
-                  background: 'transparent',
-                  color: '#6B3FA0',
-                  border: '1.5px solid #6B3FA0',
-                  borderRadius: '8px',
-                  padding: '5px 14px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: '600'
-                }}
-              >
-                {lang === 'en' ? 'عربي' : 'English'}
-              </button>
+            <div className={styles.headerRow}>
+              {title && <h1 className={styles.headerTitle}>{displayTitle}</h1>}
+              <div className={styles.headerActions}>
+                <button
+                  type="button"
+                  className={styles.outlineBtn}
+                  onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+                >
+                  {lang === 'en' ? 'عربي' : 'English'}
+                </button>
+                {backTo ? (
+                  <button
+                    type="button"
+                    className={styles.outlineBtn}
+                    onClick={() => navigate(backTo)}
+                  >
+                    {lang === 'ar' ? 'رجوع' : 'Back'}
+                  </button>
+                ) : null}
+              </div>
             </div>
             {children}
           </div>

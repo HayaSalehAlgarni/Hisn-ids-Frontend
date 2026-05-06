@@ -34,7 +34,7 @@ function bucketLabel(key, lang) {
   return (lang === 'ar' ? ar : en)[key] ?? key
 }
 
-export default function Dashboard() {
+export default function Dashboard({ linkPrefix = '/app' }) {
   const { lang } = useLang()
   const [activeStage, setActiveStage] = useState('all')
   const [stats, setStats] = useState(null)
@@ -306,9 +306,9 @@ export default function Dashboard() {
       </section>
 
       <div className={styles.actions}>
-        <Link to="/app/alerts" className={styles.actionBtn}>{t.actions.alerts}</Link>
-        <Link to="/app/analytics" className={styles.actionBtn}>{t.actions.analytics}</Link>
-        <Link to="/app/monitoring" className={styles.actionBtn}>{t.actions.monitoring}</Link>
+        <Link to={`${linkPrefix}/alerts`} className={styles.actionBtn}>{t.actions.alerts}</Link>
+        <Link to={`${linkPrefix}/analytics`} className={styles.actionBtn}>{t.actions.analytics}</Link>
+        <Link to={`${linkPrefix}/monitoring`} className={styles.actionBtn}>{t.actions.monitoring}</Link>
       </div>
     </div>
   )

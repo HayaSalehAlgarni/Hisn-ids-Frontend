@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLang } from '../../context/lang'
 import { getJsonAuth } from '../../api/client'
 import { activityActionLabel, activityRowClass } from './adminLabels'
+import { formatActivityDetails } from './activityDetails'
 import s from './adminShared.module.css'
 
 const ACTIONS = [
   'all',
   'login',
+  'login_failed',
+  'failed_login_alert',
   'user_create',
   'user_update',
   'user_delete',
@@ -49,6 +52,7 @@ export default function AdminActivity() {
     actor: { ar: 'المستخدم', en: 'Actor' },
     target: { ar: 'الهدف', en: 'Target' },
     time: { ar: 'الوقت', en: 'Time' },
+    details: { ar: 'التفاصيل', en: 'Details' },
     refresh: { ar: 'تحديث', en: 'Refresh' },
     empty: { ar: 'لا توجد سجلات.', en: 'No records.' },
   }
@@ -82,6 +86,7 @@ export default function AdminActivity() {
                 <th>{copy.action[lang]}</th>
                 <th>{copy.actor[lang]}</th>
                 <th>{copy.target[lang]}</th>
+                <th>{copy.details[lang]}</th>
                 <th>{copy.time[lang]}</th>
               </tr>
             </thead>
@@ -91,6 +96,7 @@ export default function AdminActivity() {
                   <td>{activityActionLabel(row.action, lang)}</td>
                   <td>{row.actor_label ?? row.actor_user_id ?? '—'}</td>
                   <td>{row.target_label ?? row.target_user_id ?? '—'}</td>
+                  <td className={s.detailsCell}>{formatActivityDetails(row, lang)}</td>
                   <td>{row.created_at}</td>
                 </tr>
               ))}

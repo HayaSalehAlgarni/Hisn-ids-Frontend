@@ -65,7 +65,7 @@ export default function Login() {
   }
 
   return (
-    <AuthLayout title="تسجيل الدخول">
+    <AuthLayout title="تسجيل الدخول" backTo="/">
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.field}>

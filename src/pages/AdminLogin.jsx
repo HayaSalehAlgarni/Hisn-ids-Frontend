@@ -69,7 +69,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <AuthLayout title={t.title[lang]}>
+    <AuthLayout title={t.title[lang]} backTo="/">
       <form className={styles.form} onSubmit={handleSubmit}>
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.field}>

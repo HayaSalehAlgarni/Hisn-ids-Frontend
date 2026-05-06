@@ -9,6 +9,8 @@ export function activityActionLabel(action, lang) {
     profile_update: 'تحديث الملف الشخصي',
     alerts_summary: 'ملخص التنبيهات',
     alerts_24h: 'تنبيهات (24 ساعة)',
+    failed_login_alert: 'تنبيه: محاولات تسجيل دخول فاشلة',
+    login_failed: 'محاولة تسجيل دخول فاشلة',
   }
   const en = {
     login: 'Login',
@@ -19,6 +21,8 @@ export function activityActionLabel(action, lang) {
     profile_update: 'Profile updated',
     alerts_summary: 'Alerts summary',
     alerts_24h: 'Alerts (24h)',
+    failed_login_alert: 'Alert: failed login attempts',
+    login_failed: 'Failed login attempt',
   }
   const L = lang === 'ar' ? ar : en
   return L[action] || action
@@ -36,6 +40,8 @@ export function activityRowClass(action) {
     case 'user_delete':
       return 'actDelete'
     case 'password_reset':
+    case 'failed_login_alert':
+    case 'login_failed':
       return 'actWarn'
     default:
       return 'actDefault'

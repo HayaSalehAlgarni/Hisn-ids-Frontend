@@ -5,7 +5,12 @@ import { useLang } from '../context/lang'
 import { getJsonAuth, postJsonNoBodyAuth } from '../api/client'
 
 const NAV_ITEMS = [
-  { to: '/admin/app', icon: '📊', label: { ar: 'لوحة التحكم', en: 'Dashboard' }, end: true },
+  { to: '/admin/app', icon: '💼', label: { ar: 'لوحة الإدارة', en: 'Admin dashboard' }, end: true },
+  { to: '/admin/app/security', icon: '🛡️', label: { ar: 'لوحة الأمن', en: 'Security dashboard' } },
+  { to: '/admin/app/monitoring', icon: '📡', label: { ar: 'المراقبة المباشرة', en: 'Live Monitoring' } },
+  { to: '/admin/app/alerts', icon: '⚠️', label: { ar: 'التنبيهات', en: 'Alerts' } },
+  { to: '/admin/app/reports', icon: '🧾', label: { ar: 'التقارير', en: 'Reports' } },
+  { to: '/admin/app/analytics', icon: '📊', label: { ar: 'التحليلات', en: 'Analytics' } },
   { to: '/admin/app/users', icon: '👥', label: { ar: 'المستخدمين', en: 'Users' } },
   { to: '/admin/app/create-user', icon: '➕', label: { ar: 'إنشاء مستخدم', en: 'Create User' } },
   { to: '/admin/app/activity', icon: '📜', label: { ar: 'سجل النشاط', en: 'Activity Logs' } },
@@ -117,25 +122,43 @@ export default function AdminLayout() {
             </NavLink>
           ))}
         </nav>
-        <div className={styles.sidebarFooter}>
-          <NavLink to="/app" className={styles.memberLink}>
-            {lang === 'ar' ? '→ واجهة المستخدم' : '→ Member app'}
-          </NavLink>
-        </div>
       </aside>
 
       <div className={styles.main} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
         <header className={styles.header}>
           <div className={styles.headerTitle}>
-            {location.pathname === '/admin/app' || location.pathname === '/admin/app/'
-              ? lang === 'ar'
-                ? 'لوحة التحكم'
-                : 'Dashboard'
-              : location.pathname === '/admin/app/settings'
-                ? lang === 'ar'
-                  ? 'الإعدادات'
-                  : 'Settings'
-                : location.pathname.replace(/^\/admin\/app/, '') || '/'}
+            {(() => {
+              const p = location.pathname.replace(/\/$/, '') || '/admin/app'
+              const titles =
+                lang === 'ar'
+                  ? {
+                      '/admin/app': 'لوحة الإدارة',
+                      '/admin/app/security': 'لوحة الأمن',
+                      '/admin/app/monitoring': 'المراقبة المباشرة',
+                      '/admin/app/alerts': 'التنبيهات',
+                      '/admin/app/reports': 'التقارير',
+                      '/admin/app/analytics': 'التحليلات',
+                      '/admin/app/settings': 'الإعدادات',
+                      '/admin/app/users': 'المستخدمين',
+                      '/admin/app/create-user': 'إنشاء مستخدم',
+                      '/admin/app/activity': 'سجل النشاط',
+                      '/admin/app/notifications': 'الإشعارات',
+                    }
+                  : {
+                      '/admin/app': 'Admin dashboard',
+                      '/admin/app/security': 'Security dashboard',
+                      '/admin/app/monitoring': 'Live Monitoring',
+                      '/admin/app/alerts': 'Alerts',
+                      '/admin/app/reports': 'Reports',
+                      '/admin/app/analytics': 'Analytics',
+                      '/admin/app/settings': 'Settings',
+                      '/admin/app/users': 'Users',
+                      '/admin/app/create-user': 'Create User',
+                      '/admin/app/activity': 'Activity Logs',
+                      '/admin/app/notifications': 'Notifications',
+                    }
+              return titles[p] ?? (p.replace(/^\/admin\/app/, '') || '/')
+            })()}
             {roleLabel ? (
               <span className={styles.roleBadge}>
                 {lang === 'ar' ? ' — ' : ' — '}

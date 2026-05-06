@@ -298,3 +298,153 @@
   background: var(--card-purple);
   color: var(--card-purple-text);
 }
+
+/* Generated report */
+.reportSection {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-input);
+}
+
+.reportMeta {
+  font-size: 0.9rem;
+  color: var(--text-label);
+  margin: 0 0 1rem;
+}
+
+.reportLoading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(120, 80, 140, 0.08);
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(120, 80, 140, 0.25);
+  border-top-color: var(--header-purple);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.reportError {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 0.95rem;
+}
+
+.subHeading {
+  font-size: 0.95rem;
+  margin: 1rem 0 0.5rem;
+  color: var(--text-dark);
+}
+
+.summaryBox {
+  margin-bottom: 1rem;
+}
+
+.summaryDl {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 200px) 1fr;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.summaryRow dt {
+  margin: 0;
+  color: var(--text-label);
+  font-weight: 600;
+}
+
+.summaryRow dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.chartWrap {
+  margin: 1rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.chartSvg svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.tableWrap {
+  margin-bottom: 1.25rem;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.dataTable th,
+.dataTable td {
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--border-input);
+  text-align: left;
+}
+
+.dataTable th {
+  background: rgba(120, 80, 140, 0.08);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reportPre {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #1e1b2e;
+  color: #e8e4f0;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sampleBanner {
+  margin: 0 0 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background: rgba(202, 138, 4, 0.12);
+  border: 1px solid rgba(202, 138, 4, 0.35);
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.9rem;
+}

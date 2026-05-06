@@ -1,4 +1,4 @@
-import { getJson } from './client'
+import { getJsonAuth } from './client'
 
 export const normalizeSeverity = (value) => {
   const s = String(value || '').toLowerCase()
@@ -9,6 +9,7 @@ export const normalizeSeverity = (value) => {
 
 export const threatTypeFromAttack = (attackType) => {
   const value = String(attackType || '').toLowerCase()
+  if (value.includes('failed_login')) return 'Login'
   if (value.includes('dns')) return 'DNS'
   if (value.includes('scan') || value.includes('intrusion') || value.includes('login') || value.includes('brute')) return 'Suspicious'
   return 'Normal'
@@ -27,6 +28,7 @@ export const toUiAlert = (row) => ({
 })
 
 export async function fetchAlerts() {
-  const data = await getJson('/api/alerts')
-  return Array.isArray(data) ? data : []
+  const data = await getJsonAuth('/api/alerts')
+  const list = data?.alerts ?? data ?? []
+  return Array.isArray(list) ? list : []
 }

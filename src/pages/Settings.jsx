@@ -4,19 +4,6 @@ import styles from './Settings.module.css'
 import { useLang } from '../context/lang'
 import { postJson } from '../api/client'
 
-const ALERT_OPTIONS = [
-  { id: 'critical', label: 'CRITICAL فقط' },
-  { id: 'high', label: 'HIGH فأعلى' },
-  { id: 'medium', label: 'MEDIUM فأعلى' },
-  { id: 'low', label: 'الكل' },
-]
-
-const REFRESH_OPTIONS = [
-  { id: '5', label: '5 ثوانٍ' },
-  { id: '10', label: '10 ثوانٍ' },
-  { id: '30', label: '30 ثانية' },
-]
-
 export default function Settings() {
   const { lang, setLang } = useLang()
   const navigate = useNavigate()
@@ -66,9 +53,20 @@ export default function Settings() {
     notifications: {
       email: 'إشعارات البريد الإلكتروني',
       level: 'مستوى الإشعارات',
-      criticalOnly: 'CRITICAL فقط',
+      criticalOnly: 'حرجة فقط',
       all: 'الكل',
     },
+    alertOptions: [
+      { id: 'critical', label: 'حرجة فقط' },
+      { id: 'high', label: 'عالية فأعلى' },
+      { id: 'medium', label: 'متوسطة فأعلى' },
+      { id: 'low', label: 'جميع المستويات' },
+    ],
+    refreshOptions: [
+      { id: '5', label: '5 ثوانٍ' },
+      { id: '10', label: '10 ثوانٍ' },
+      { id: '30', label: '30 ثانية' },
+    ],
     emailReadOnly: 'للقراءة فقط - لا يمكن تعديل البريد الإلكتروني.',
     logout: 'تسجيل الخروج',
     reset: {
@@ -98,6 +96,9 @@ export default function Settings() {
       smtpNotConfigured:
         'لم يُضبط إرسال البريد (SMTP). املأ SMTP_* في ملف .env أو فعّل OTP_ALLOW_WITHOUT_SMTP للتطوير واطلع على طرفية الخادم.',
       otpSendFailed: 'تعذّر إرسال البريد. تحقق من إعدادات SMTP أو اتصال الخادم.',
+      verifyFailed: 'فشل التحقق من الرمز.',
+      passwordResetFailed: 'فشلت إعادة تعيين كلمة المرور.',
+      modalClose: 'إغلاق',
     },
   } : {
     title: 'Settings',
@@ -115,9 +116,20 @@ export default function Settings() {
     notifications: {
       email: 'Email notifications',
       level: 'Notification level',
-      criticalOnly: 'CRITICAL only',
+      criticalOnly: 'Critical only',
       all: 'All',
     },
+    alertOptions: [
+      { id: 'critical', label: 'Critical only' },
+      { id: 'high', label: 'High & above' },
+      { id: 'medium', label: 'Medium & above' },
+      { id: 'low', label: 'All levels' },
+    ],
+    refreshOptions: [
+      { id: '5', label: '5 seconds' },
+      { id: '10', label: '10 seconds' },
+      { id: '30', label: '30 seconds' },
+    ],
     emailReadOnly: 'Read-only: email cannot be edited.',
     logout: 'Log out',
     reset: {
@@ -147,6 +159,9 @@ export default function Settings() {
       smtpNotConfigured:
         'Email (SMTP) is not configured. Set SMTP_* in .env or enable OTP_ALLOW_WITHOUT_SMTP for dev and read the server log.',
       otpSendFailed: 'Could not send email. Check SMTP settings or server connectivity.',
+      verifyFailed: 'OTP verification failed.',
+      passwordResetFailed: 'Password reset failed.',
+      modalClose: 'Close',
     },
   }
 
@@ -204,7 +219,7 @@ export default function Settings() {
       await postJson('/api/auth/password-reset/verify-otp', { email: userEmail, code })
       setResetStep(3)
     } catch (e) {
-      setResetError(e?.message || 'OTP verification failed.')
+      setResetError(e?.message || t.reset.verifyFailed)
     } finally {
       setResetLoading(false)
     }
@@ -238,7 +253,7 @@ export default function Settings() {
         closeResetModal()
       }, 900)
     } catch (e) {
-      setResetError(e?.message || 'Password reset failed.')
+      setResetError(e?.message || t.reset.passwordResetFailed)
     } finally {
       setResetLoading(false)
     }
@@ -319,7 +334,7 @@ export default function Settings() {
               <div className={styles.field}>
                 <label className={styles.label}>{t.system.alertThreshold}</label>
                 <div className={styles.optionButtons}>
-                  {ALERT_OPTIONS.map((o) => (
+                  {t.alertOptions.map((o) => (
                     <button
                       key={o.id}
                       type="button"
@@ -338,7 +353,7 @@ export default function Settings() {
               <div className={styles.field}>
                 <label className={styles.label}>{t.system.refreshRate}</label>
                 <div className={styles.optionButtons}>
-                  {REFRESH_OPTIONS.map((o) => (
+                  {t.refreshOptions.map((o) => (
                     <button
                       key={o.id}
                       type="button"
@@ -394,7 +409,7 @@ export default function Settings() {
           <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>{t.reset.title}</h3>
-              <button type="button" className={styles.modalClose} onClick={closeResetModal} aria-label="Close">
+              <button type="button" className={styles.modalClose} onClick={closeResetModal} aria-label={t.reset.modalClose}>
                 ×
               </button>
             </div>

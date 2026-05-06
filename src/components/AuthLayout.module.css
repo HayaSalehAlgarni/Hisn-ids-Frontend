@@ -62,6 +62,47 @@
   max-width: 420px;
 }
 
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.headerTitle {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 1.75rem;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+}
+
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.outlineBtn {
+  background: transparent;
+  color: #6b3fa0;
+  border: 1.5px solid #6b3fa0;
+  border-radius: 8px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.outlineBtn:hover {
+  opacity: 0.88;
+}
+
 .formTitle {
   color: var(--text-dark);
   font-size: 1.75rem;

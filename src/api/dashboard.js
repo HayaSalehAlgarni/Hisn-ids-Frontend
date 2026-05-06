@@ -1,6 +1,6 @@
-import { getJson } from './client'
+import { getJsonAuth } from './client'
 
 export async function fetchDashboardStats(severity = 'all') {
   const q = severity === 'all' ? '' : `?severity=${encodeURIComponent(severity)}`
-  return getJson(`/api/stats/dashboard${q}`)
+  return getJsonAuth(`/api/stats/dashboard${q}`)
 }
