@@ -21,7 +21,7 @@ const NAV_ITEMS = [
 export default function AdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { lang } = useLang()
+  const { lang, setLang } = useLang()
   const [ready, setReady] = useState(false)
   const [me, setMe] = useState(null)
   const [noteBadge, setNoteBadge] = useState(0)
@@ -32,7 +32,15 @@ export default function AdminLayout() {
       try {
         const data = await getJsonAuth('/api/admin/me')
         if (!cancelled) {
-          setMe(data.user)
+          const u = data.user
+          setMe(u)
+          const pl = u?.preferred_language
+          if (pl === 'ar' || pl === 'en') setLang(pl)
+          try {
+            localStorage.setItem('hisn_user', JSON.stringify(u || {}))
+          } catch {
+            /* ignore */
+          }
           setReady(true)
         }
       } catch {

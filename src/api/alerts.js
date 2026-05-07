@@ -18,8 +18,8 @@ export const threatTypeFromAttack = (attackType) => {
 export const toUiAlert = (row) => ({
   id: row.id,
   title: row.description || row.attack_type || 'Security alert',
-  source: row.source_ip || 'N/A',
-  destination: row.destination_ip || 'N/A',
+  source: row.source_ip ?? row.src_ip ?? 'N/A',
+  destination: row.destination_ip ?? row.dst_ip ?? 'N/A',
   time: row.timestamp ? new Date(row.timestamp).toLocaleTimeString('en-GB', { hour12: false }) : '--:--:--',
   severity: String(row.severity || '').toLowerCase() || 'low',
   type: threatTypeFromAttack(row.attack_type),
@@ -28,7 +28,7 @@ export const toUiAlert = (row) => ({
 })
 
 export async function fetchAlerts() {
-  const data = await getJsonAuth('/api/alerts')
+  const data = await getJsonAuth('/api/alerts?limit=200')
   const list = data?.alerts ?? data ?? []
   return Array.isArray(list) ? list : []
 }

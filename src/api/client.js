@@ -2,7 +2,8 @@
 // Set VITE_API_BASE_URL for production or to force a full URL to the backend.
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.DEV ? '' : 'http://127.0.0.1:5000')
+  import.meta.env.VITE_API_URL ||
+  ''
 
 const buildUrl = (path) => {
   const p = path.startsWith('/') ? path : `/${path}`
