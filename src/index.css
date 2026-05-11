@@ -1,0 +1,67 @@
+/* HISN - حصن | AI & ML Analytics IDS - Theme */
+:root {
+  /* From Create Account / Branding */
+  --bg-page: #fdf7f3;
+  --panel-dark: #50382d;
+  --panel-cream: #fdf7f3;
+  --text-dark: #50382d;
+  --text-label: #a06446;
+  --border-input: #d2a078;
+  --btn-primary: #78508c;
+  --btn-primary-text: #ffffff;
+  --brand-white: #ffffff;
+
+  /* Dashboard */
+  --bg-dashboard: #fdf7f3;
+  --content-cream: #fdf7f3;
+  --header-purple: #8b6baa;
+  --header-bar: #5a3b2c;
+  --card-purple: #b49fce;
+  --card-purple-text: #5a4a6e;
+  --alert-critical: #a54f4f;
+  --alert-critical-text: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--btn-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input, select, textarea {
+  font-family: inherit;
+}
+
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
+}
