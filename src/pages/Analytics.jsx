@@ -49,11 +49,9 @@ export default function Analytics() {
     threatTypes: 'أنواع التهديدات',
     kpis: 'مؤشرات الأداء',
     portScan: 'مسح المنافذ',
-    bruteForce: 'هجوم القوة الغاشمة',
-    sqlInjection: 'حقن SQL',
-    xss: 'هجمات XSS',
-    ddos: 'هجوم حجب الخدمة DDoS',
-    malwareOther: 'برمجيات خبيثة / أخرى',
+    logins: 'محاولات الدخول',
+    malware: 'برمجيات خبيثة',
+    other: 'أخرى',
     recall: 'معدل اكتشاف الهجمات (Recall)',
     fpr: 'معدل الإنذارات الكاذبة (FPR)',
     precision: 'الدقة الإيجابية (Precision)',
@@ -68,11 +66,9 @@ export default function Analytics() {
     threatTypes: 'Threat types',
     kpis: 'KPIs',
     portScan: 'Port scanning',
-    bruteForce: 'Brute Force',
-    sqlInjection: 'SQL Injection',
-    xss: 'XSS',
-    ddos: 'DDoS',
-    malwareOther: 'Malware / Other',
+    logins: 'Login attempts',
+    malware: 'Malware',
+    other: 'Other',
     recall: 'Attack Detection Rate (Recall)',
     fpr: 'False Positive Rate (FPR)',
     precision: 'Precision',
@@ -84,34 +80,20 @@ export default function Analytics() {
   const threatStats = useMemo(() => {
     const total = stats?.total || 0
     const typeRows = stats?.attack_types || []
-    const countByType = (key) =>
+    const denom = total || 1
+    const countByKeyword = (keyword) =>
       typeRows
-        .filter((r) => String(r.type || '').toLowerCase() === key)
+        .filter((r) => String(r.type || '').toLowerCase().includes(keyword))
         .reduce((sum, r) => sum + Number(r.count || 0), 0)
-
-    const portScanCount = countByType('port_scan')
-    const bruteForceCount = countByType('brute_force')
-    const sqlInjectionCount = countByType('sql_injection')
-    const xssCount = countByType('xss')
-    const ddosCount = countByType('ddos')
-    const malformedCount = countByType('malformed_request')
-
-    // Exclude benign traffic from threat breakdown.
-    const threatRows = typeRows.filter((r) => String(r.type || '').toLowerCase() !== 'normal')
-    const threatTotal = threatRows.reduce((sum, r) => sum + Number(r.count || 0), 0)
-    const mappedTotal =
-      portScanCount + bruteForceCount + sqlInjectionCount + xssCount + ddosCount + malformedCount
-    const remainingThreats = Math.max(0, threatTotal - mappedTotal)
-    const malwareOtherCount = malformedCount + remainingThreats
-    const denom = portScanCount + bruteForceCount + sqlInjectionCount + xssCount + ddosCount + malwareOtherCount || 1
-
+    const portScanCount = countByKeyword('scan')
+    const loginsCount = countByKeyword('login')
+    const malwareCount = countByKeyword('malware')
+    const otherCount = Math.max(0, total - portScanCount - loginsCount - malwareCount)
     return {
       portScan: Math.round((portScanCount / denom) * 100),
-      bruteForce: Math.round((bruteForceCount / denom) * 100),
-      sqlInjection: Math.round((sqlInjectionCount / denom) * 100),
-      xss: Math.round((xssCount / denom) * 100),
-      ddos: Math.round((ddosCount / denom) * 100),
-      malwareOther: Math.round((malwareOtherCount / denom) * 100),
+      logins: Math.round((loginsCount / denom) * 100),
+      malware: Math.round((malwareCount / denom) * 100),
+      other: Math.round((otherCount / denom) * 100),
       totalCount: total,
     }
   }, [stats])
@@ -130,7 +112,7 @@ export default function Analytics() {
     const fmtPct = (v) => {
       const n = Number(v)
       if (!Number.isFinite(n)) return t.noData
-      return `${(n * 100).toFixed(2)}%`
+      return `${Math.round(n * 100)}%`
     }
     return {
       recall: fmtPct(m.recall),
@@ -167,11 +149,9 @@ export default function Analytics() {
           <h3 className={styles.cardTitle}>{t.threatTypes}</h3>
           <ul className={styles.stats}>
             <li><span className={styles.statLabel}>{t.portScan}</span><span className={styles.statValue}>{threatStats.portScan}%</span></li>
-            <li><span className={styles.statLabel}>{t.bruteForce}</span><span className={styles.statValue}>{threatStats.bruteForce}%</span></li>
-            <li><span className={styles.statLabel}>{t.sqlInjection}</span><span className={styles.statValue}>{threatStats.sqlInjection}%</span></li>
-            <li><span className={styles.statLabel}>{t.xss}</span><span className={styles.statValue}>{threatStats.xss}%</span></li>
-            <li><span className={styles.statLabel}>{t.ddos}</span><span className={styles.statValue}>{threatStats.ddos}%</span></li>
-            <li><span className={styles.statLabel}>{t.malwareOther}</span><span className={styles.statValue}>{threatStats.malwareOther}%</span></li>
+            <li><span className={styles.statLabel}>{t.logins}</span><span className={styles.statValue}>{threatStats.logins}%</span></li>
+            <li><span className={styles.statLabel}>{t.malware}</span><span className={styles.statValue}>{threatStats.malware}%</span></li>
+            <li><span className={styles.statLabel}>{t.other}</span><span className={styles.statValue}>{threatStats.other}%</span></li>
           </ul>
         </div>
         <div className={styles.card}>

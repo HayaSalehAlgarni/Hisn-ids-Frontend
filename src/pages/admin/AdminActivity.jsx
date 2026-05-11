@@ -17,42 +17,6 @@ const ACTIONS = [
   'profile_update',
 ]
 
-function formatEnglishDateTime(value) {
-  if (!value) return '—'
-  const normalized = String(value).replace(' ', 'T')
-  const dt = new Date(normalized)
-  if (Number.isNaN(dt.getTime())) return String(value)
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).format(dt)
-}
-
-function toApiDate(mmddyyyy) {
-  const raw = String(mmddyyyy || '').trim()
-  const m = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-  if (!m) return ''
-  const month = m[1]
-  const day = m[2]
-  const year = m[3]
-  return `${year}-${month}-${day}`
-}
-
-function formatInputDate(value) {
-  const raw = String(value || '').trim()
-  if (!raw) return ''
-  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  if (iso) return `${iso[2]}/${iso[3]}/${iso[1]}`
-  const us = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-  if (us) return raw
-  return ''
-}
-
 export default function AdminActivity() {
   const { lang } = useLang()
   const [items, setItems] = useState([])
@@ -66,10 +30,8 @@ export default function AdminActivity() {
     try {
       const params = new URLSearchParams({ limit: '120' })
       if (action && action !== 'all') params.set('action', action)
-      const fromApi = toApiDate(from)
-      const toApi = toApiDate(to)
-      if (fromApi) params.set('from', fromApi)
-      if (toApi) params.set('to', toApi)
+      if (from.trim()) params.set('from', from.trim())
+      if (to.trim()) params.set('to', to.trim())
       const data = await getJsonAuth(`/api/admin/activity?${params}`)
       setItems(data.items || [])
     } catch {
@@ -108,24 +70,8 @@ export default function AdminActivity() {
             </option>
           ))}
         </select>
-        <input
-          className={s.input}
-          type="text"
-          inputMode="numeric"
-          placeholder="MM/DD/YYYY"
-          dir="ltr"
-          value={from}
-          onChange={(e) => setFrom(formatInputDate(e.target.value))}
-        />
-        <input
-          className={s.input}
-          type="text"
-          inputMode="numeric"
-          placeholder="MM/DD/YYYY"
-          dir="ltr"
-          value={to}
-          onChange={(e) => setTo(formatInputDate(e.target.value))}
-        />
+        <input className={s.input} type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        <input className={s.input} type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         <button type="button" className={s.btn} onClick={() => load()}>
           {copy.refresh[lang]}
         </button>
@@ -151,7 +97,7 @@ export default function AdminActivity() {
                   <td>{row.actor_label ?? row.actor_user_id ?? '—'}</td>
                   <td>{row.target_label ?? row.target_user_id ?? '—'}</td>
                   <td className={s.detailsCell}>{formatActivityDetails(row, lang)}</td>
-                  <td>{formatEnglishDateTime(row.created_at)}</td>
+                  <td>{row.created_at}</td>
                 </tr>
               ))}
             </tbody>

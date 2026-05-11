@@ -43,7 +43,7 @@ function MiniChart({ alertsSeries, activitySeries }) {
             y={toY(d.count)}
             width={barW}
             height={barH}
-            fill="#b91c1c"
+            fill="#5b4b8a"
             opacity={0.88}
           />
         )

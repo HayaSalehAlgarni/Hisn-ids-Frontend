@@ -9,6 +9,7 @@ export default function AdminSettings() {
   const navigate = useNavigate()
   const { me, setMe } = useOutletContext() || {}
   const [name, setName] = useState(me?.name || '')
+  const [password, setPassword] = useState('')
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(false)
@@ -33,19 +34,26 @@ export default function AdminSettings() {
     en: { ar: 'English', en: 'English' },
     name: { ar: 'الاسم', en: 'Name' },
     email: { ar: 'البريد الإلكتروني', en: 'Email' },
+    password: { ar: 'كلمة مرور جديدة (اختياري)', en: 'New password (optional)' },
     save: { ar: 'حفظ', en: 'Save' },
     logout: { ar: 'تسجيل خروج', en: 'Logout' },
     ok: { ar: 'تم الحفظ', en: 'Saved' },
+    short: { ar: '8 أحرف على الأقل', en: 'At least 8 characters' },
   }
 
   const submit = async (e) => {
     e.preventDefault()
     setErr('')
     setMsg('')
+    if (password && password.length < 8) {
+      setErr(copy.short[lang])
+      return
+    }
     setLoading(true)
     try {
       const body = {}
       if (name.trim() !== (me?.name || '')) body.name = name.trim()
+      if (password) body.new_password = password
       if (Object.keys(body).length === 0) {
         setMsg(lang === 'ar' ? 'لا تغييرات' : 'No changes')
         setLoading(false)
@@ -53,6 +61,7 @@ export default function AdminSettings() {
       }
       const data = await patchJsonAuth('/api/admin/profile', body)
       if (data.user && setMe) setMe(data.user)
+      setPassword('')
       setMsg(copy.ok[lang])
     } catch (e) {
       setErr(lang === 'ar' ? 'فشل الحفظ' : 'Save failed')
@@ -104,6 +113,18 @@ export default function AdminSettings() {
               {me?.email || '—'}
             </div>
           </div>
+          <div className={s.field}>
+            <label>{copy.password[lang]}</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+            />
+          </div>
+          <button type="submit" className={s.btn} disabled={loading}>
+            {copy.save[lang]}
+          </button>
         </form>
         <button
           type="button"
